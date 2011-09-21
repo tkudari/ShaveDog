@@ -76,7 +76,7 @@ public class ShaveDogActivity extends Activity {
             socket.setSoTimeout( Definitions.SOCKET_TIMEOUT );
             mSocket = socket;
             if ( !Definitions.DASHWIRE ) {
-                new Thread( new Server( socket ) ).start();
+                new Thread( new Server( socket, this ) ).start();
             }
         } catch ( Exception e ) {
             e.printStackTrace();
@@ -141,9 +141,9 @@ public class ShaveDogActivity extends Activity {
                 Toast toast = Toast.makeText( mContext, toastText, Toast.LENGTH_SHORT );
                 toast.show();
             }
-            String searchString = Definitions.QUERY_LIST + ":" + mUserName + ":" + getOurIp().toString().replace( "/", "" );
+            String searchString = Definitions.QUERY_LIST + ":" + mUserName + ":" + getOurIp().toString().replace( "/", "" ) + Definitions.END_DELIM;
             Log.d( "XXXX", "searchString = " + searchString );
-            DatagramPacket sendPacket = new DatagramPacket( Definitions.QUERY_LIST.getBytes(), Definitions.QUERY_LIST.length(), getBroadcastAddress(),
+            DatagramPacket sendPacket = new DatagramPacket( searchString.getBytes(), searchString.length(), getBroadcastAddress(),
                     Definitions.SERVER_PORT );
             Log.d( "XXXX", "gonna send broadcast for : " + Definitions.QUERY_LIST );
             Log.d( "XXXX", "broadcast packet : " + new String( sendPacket.getData() ) );
@@ -174,7 +174,7 @@ public class ShaveDogActivity extends Activity {
             quads[ k ] = ( byte ) ( ( broadcast >> k * 8 ) & 0xFF );
         Log.d( "XXXX", "broadcast address here = " + InetAddress.getByAddress( quads ).getHostAddress() );
         return InetAddress.getByAddress( quads );
-    }
+    } 
 
     private void dumpImageData() {
 
@@ -271,15 +271,7 @@ public class ShaveDogActivity extends Activity {
             File imageFile = new File( mediaCursor.getString( 1 ) );
             getFinger( imageFile );
 
-            /*
-             * byte[] data = new byte[ ( int ) imageFile.length() ]; try {
-             * FileInputStream fIs = new FileInputStream( imageFile ); fIs.read(
-             * data ); fIs.close();
-             * 
-             * } catch ( Exception e ) { Log.d( "XXXX", "dumpImageFile error" );
-             * e.printStackTrace(); } Log.d( "XXXX", "md5 of file : " +
-             * imageFile.getName() + " = " + md5( data ) );
-             */
+           
         }
 
     }
