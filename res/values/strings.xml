@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ShaveDog</string>
+    <string name="get_list">Show Peers</string>
+    <string name="dump_img_data">Dump image data</string>
+    <string name="welcome">Choose an option with the Menu key</string>
+    <string name="about">About..</string>
+    <string name="aboutContent">This is currently a diagnostic tool under development. More features will be added.\n\n 
+    		\'Dump image data\' dumps details about the images currently on the device. These are taken from the MediaProvider. However, the \'Actual file size\' and \
+    		the \'Actual mTime\' are read from the image file itself. \(These details are also being logged\) \n\n It also does what the title says; \
+    	hold your phone with the app running, close to a dog. </string>
+   	<string name="main_activity">Go Back</string>
+   	<string name="quit">Quit</string>
+   	<string name="not_loaded">No images found, or MediaProvider not populated yet. \n Give it some time or take some pictures.</string>
+   	<string name="populate_list">Populate List</string>
+   	<string name="set_creds">Set Credentials</string>   	
+   	<string name="username">User name</string>
+   	<string name="set">Set!</string>
+   	<string name="default_username_used">Username not set, using default user name:</string>
+   	<string name="username_too_small">Minimum username length should be = </string>
+   	<string name="back">Back</string>
+   	<string name="dump_img_file">Dump first img</string>
+	<string name="md5_img_file">MD5 of first img</string>   	
+   	
+   	
+   	
+</resources>
