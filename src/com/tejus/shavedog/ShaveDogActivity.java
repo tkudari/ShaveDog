@@ -17,7 +17,9 @@ import java.util.Date;
 
 import com.tejus.shavedog.R;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -143,8 +145,7 @@ public class ShaveDogActivity extends Activity {
             }
             String searchString = Definitions.QUERY_LIST + ":" + mUserName + ":" + getOurIp().toString().replace( "/", "" ) + Definitions.END_DELIM;
             Log.d( "XXXX", "searchString = " + searchString );
-            DatagramPacket sendPacket = new DatagramPacket( searchString.getBytes(), searchString.length(), getBroadcastAddress(),
-                    Definitions.SERVER_PORT );
+            DatagramPacket sendPacket = new DatagramPacket( searchString.getBytes(), searchString.length(), getBroadcastAddress(), Definitions.SERVER_PORT );
             Log.d( "XXXX", "gonna send broadcast for : " + Definitions.QUERY_LIST );
             Log.d( "XXXX", "broadcast packet : " + new String( sendPacket.getData() ) );
 
@@ -174,7 +175,7 @@ public class ShaveDogActivity extends Activity {
             quads[ k ] = ( byte ) ( ( broadcast >> k * 8 ) & 0xFF );
         Log.d( "XXXX", "broadcast address here = " + InetAddress.getByAddress( quads ).getHostAddress() );
         return InetAddress.getByAddress( quads );
-    } 
+    }
 
     private void dumpImageData() {
 
@@ -271,7 +272,6 @@ public class ShaveDogActivity extends Activity {
             File imageFile = new File( mediaCursor.getString( 1 ) );
             getFinger( imageFile );
 
-           
         }
 
     }
@@ -328,7 +328,7 @@ public class ShaveDogActivity extends Activity {
     }
 
     void getFinger( File file ) {
-        
+
         byte[] hashResult;
         long beforeTime = 0, afterTime;
         Log.d( "XXXX", "filename here = " + file.getName() );
@@ -339,12 +339,9 @@ public class ShaveDogActivity extends Activity {
 
         long sampleSize[] = new long[ 4 ];
         long sampleOffset[] = new long[ 4 ];
-        
 
         final int BUFFER_LIMIT = 2000000;
         byte buffer[] = new byte[ BUFFER_LIMIT ];
-
-        
 
         // sample sizes
         sampleSize[ 0 ] = ( long ) ( 0.1 * fileLength );
@@ -365,8 +362,7 @@ public class ShaveDogActivity extends Activity {
         for ( int i = 0; i < 4; i++ ) {
             Log.d( "XXXX", "sampleOffset [" + i + "] = " + sampleOffset[ i ] );
         }
-        
-        
+
         try {
 
             MessageDigest digest = java.security.MessageDigest.getInstance( "MD5" );
@@ -375,30 +371,31 @@ public class ShaveDogActivity extends Activity {
             Date before = new Date();
             beforeTime = before.getTime();
             for ( int i = 0; i < 4; i++ ) {
-                ourFile.seek(sampleOffset[i]);
+                ourFile.seek( sampleOffset[ i ] );
                 if ( sampleSize[ i ] > BUFFER_LIMIT ) {
                     long numberOfChunks;
                     numberOfChunks = sampleSize[ i ] / BUFFER_LIMIT;
                     for ( int j = 0; j < numberOfChunks; j++ ) {
-                        Log.d("XXXX", "gonna start reading chunk #: " + ( ( int ) sampleOffset[ i ] + j * BUFFER_LIMIT ));
-                        //fIs.read( buffer, ( ( int ) sampleOffset[ i ] + j * BUFFER_LIMIT ), BUFFER_LIMIT );
-                        ourFile.read(buffer, 0, BUFFER_LIMIT);
-                        digest.update(buffer, 0, buffer.length);
+                        Log.d( "XXXX", "gonna start reading chunk #: " + ( ( int ) sampleOffset[ i ] + j * BUFFER_LIMIT ) );
+                        // fIs.read( buffer, ( ( int ) sampleOffset[ i ] + j *
+                        // BUFFER_LIMIT ), BUFFER_LIMIT );
+                        ourFile.read( buffer, 0, BUFFER_LIMIT );
+                        digest.update( buffer, 0, buffer.length );
                     }
                 } else {
-                       ourFile.read(buffer, 0, BUFFER_LIMIT);
-                      digest.update(buffer, 0, buffer.length);
+                    ourFile.read( buffer, 0, BUFFER_LIMIT );
+                    digest.update( buffer, 0, buffer.length );
                 }
             }
             hashResult = digest.digest();
-            
+
             StringBuffer hexString = new StringBuffer();
             for ( int i = 0; i < hashResult.length; i++ ) {
                 hexString.append( Integer.toHexString( 0xFF & hashResult[ i ] ) );
             }
-            
-            Log.d("XXXX", "hexString = " + hexString);
-            
+
+            Log.d( "XXXX", "hexString = " + hexString );
+
         } catch ( IOException e ) {
             e.printStackTrace();
         } catch ( NoSuchAlgorithmException e ) {
@@ -406,11 +403,30 @@ public class ShaveDogActivity extends Activity {
         } catch ( Exception e ) {
             e.printStackTrace();
         }
-        
+
         Date after = new Date();
         afterTime = after.getTime();
-        
-        Log.d("XXXX", "time taken = " + (afterTime - beforeTime));
+
+        Log.d( "XXXX", "time taken = " + ( afterTime - beforeTime ) );
+    }
+
+    public void newRequest( String userName, String address ) {
+
+        AlertDialog.Builder requestAlert = new AlertDialog.Builder( this );
+        requestAlert.setMessage( getResources().getString( R.string.new_request ) ).setCancelable( false ).setPositiveButton( "Yes",
+                new DialogInterface.OnClickListener() {
+                    public void onClick( DialogInterface dialog, int id ) {
+                        Log.d( "XXXX", "request accepted.." );
+                    }
+                } ).setNegativeButton( "No", new DialogInterface.OnClickListener() {
+            public void onClick( DialogInterface dialog, int id ) {
+                Log.d( "XXXX", "thanks, but no thanks.." );
+                dialog.cancel(); 
+            }
+
+        } );
+        AlertDialog alert = requestAlert.create();
+        alert.show();
     }
 }
 

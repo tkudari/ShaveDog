@@ -21,6 +21,7 @@
    	<string name="back">Back</string>
    	<string name="dump_img_file">Dump first img</string>
 	<string name="md5_img_file">MD5 of first img</string>   	
+	<string name="new_request">You have a new Request!</string>   	
    	
    	
    	

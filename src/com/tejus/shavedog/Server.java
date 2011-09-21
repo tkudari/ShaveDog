@@ -5,6 +5,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.StringTokenizer;
 
+import android.graphics.drawable.Drawable.Callback;
 import android.util.Log;
 
 public class Server implements Runnable {
@@ -38,13 +39,17 @@ public class Server implements Runnable {
         String words[] = new String[Definitions.COMMAND_WORD_LENGTH];
         int wordCounter = 0;
 
-        StringTokenizer strTok = new StringTokenizer( string, Definitions.COMMAND_DELIM );
+        StringTokenizer strTok = new StringTokenizer( string, Definitions.COMMAND_DELIM  );
         while(strTok.hasMoreTokens()) {
             words[wordCounter] = strTok.nextToken();
             ++ wordCounter;
         }
         for(String word : words)
             Log.d("XXXX", "word = " + word);
+        
+        if(words[0].equals( Definitions.QUERY_LIST )) {
+            mCallback.newRequest(words[1], words[2]);
+        }
     }
 
     

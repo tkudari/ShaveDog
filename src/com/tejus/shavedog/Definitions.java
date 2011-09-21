@@ -17,7 +17,7 @@ public class Definitions {
     public static String defaultUserName = "defaultUserName";
     public static int MIN_USERNAME_LENGTH = 3;
     public static String END_DELIM = "*";
-    public static String COMMAND_DELIM = ":";
+    public static String COMMAND_DELIM = ":*";
     public static int COMMAND_WORD_LENGTH = 4;
     
 
