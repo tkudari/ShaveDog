@@ -2,12 +2,16 @@
 <resources>
     <string name="app_name">ShaveDog</string>
     <string name="get_list">Show Peers</string>
-    <string name="dump_img_data">Dump image data</string>
+    <string name="dump_img_data">Dump video data</string>
     <string name="welcome">Choose an option with the Menu key</string>
     <string name="about">About..</string>
     <string name="aboutContent">This is currently a diagnostic tool under development. More features will be added.\n\n 
     		\'Dump image data\' dumps details about the images currently on the device. These are taken from the MediaProvider. However, the \'Actual file size\' and \
-    		the \'Actual mTime\' are read from the image file itself. \(These details are also being logged\) \n\n It also does what the title says; \
+    		the \'Actual mTime\' are read from the image file itself. \(These details are also being logged\) \n\n \
+    		\'Hash my Images\' and \'Hash my videos\' produce SHA1 or MD5 hashes of your files and dump info about time taken\
+    		, file names, sizes, etc. to the screen and logs \n\n \
+    		\'Flip Hash algorithm\' toggles between SHA1 and MD5 \n\n \
+    		It also does what the title says; \
     	hold your phone with the app running, close to a dog. </string>
    	<string name="main_activity">Go Back</string>
    	<string name="quit">Quit</string>
@@ -20,7 +24,13 @@
    	<string name="username_too_small">Minimum username length should be = </string>
    	<string name="back">Back</string>
    	<string name="dump_img_file">Dump first img</string>
-	<string name="md5_img_file">MD5 of first img</string>   	
+	<string name="hash_img_file">Hash my images</string>
+	<string name="hash_video_file">Hash my videos</string>
+	<string name="no_images_found">No images found/ mediascanner still running/ SD card mounted elsewhere</string>
+	<string name="no_videos_found">No videos found/ mediascanner still running/ SD card mounted elsewhere</string>
+	<string name="flip_algo">Flip Hash algorithm</string>
+	
+	
    	
    	
    	
