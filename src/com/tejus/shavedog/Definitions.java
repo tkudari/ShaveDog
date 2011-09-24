@@ -9,7 +9,7 @@ public class Definitions {
     public static final int COMMAND_BUFSIZE = 40;
     public static String QUERY_LIST = "query_list";
     public static final String TAG = "XXXX";
-    public static final boolean DASHWIRE = false;
+    public static final boolean DASHWIRE = true;
     public static final int SOCKET_TIMEOUT = 500;
     public static String USERNAME;
     public static String credsPrefFile = "credsPrefFile";

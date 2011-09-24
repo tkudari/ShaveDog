@@ -16,6 +16,9 @@
             </intent-filter>
         </activity>
         
+		<service android:name="ShaveService"></service>
+        
+        
           <activity android:name=".AboutActivity"
         		  android:configChanges="orientation"
         		  android:noHistory="true"

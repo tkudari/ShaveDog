@@ -3,8 +3,10 @@ package com.tejus.shavedog;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.URL;
 import java.util.StringTokenizer;
 
+import android.os.AsyncTask;
 import android.util.Log;
 
 public class Server implements Runnable {
@@ -34,11 +36,12 @@ public class Server implements Runnable {
         }
     }
 
-    private void dealWithReceivedPacket( String string ) {
+    private void dealWithReceivedPacket( DatagramPacket packet ) {
         String words[] = new String[Definitions.COMMAND_WORD_LENGTH];
         int wordCounter = 0;
+        String command = new String(packet.getData());
 
-        StringTokenizer strTok = new StringTokenizer( string, Definitions.COMMAND_DELIM );
+        StringTokenizer strTok = new StringTokenizer( command, Definitions.COMMAND_DELIM );
         while(strTok.hasMoreTokens()) {
             words[wordCounter] = strTok.nextToken();
             ++ wordCounter;
@@ -47,6 +50,9 @@ public class Server implements Runnable {
             Log.d("XXXX", "word = " + word);
     }
 
+    
+    
+   
     
 
 }

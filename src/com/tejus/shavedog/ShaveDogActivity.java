@@ -17,8 +17,10 @@ import java.util.Date;
 
 import com.tejus.shavedog.R;
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.media.ExifInterface;
@@ -26,10 +28,12 @@ import android.net.DhcpInfo;
 import android.net.ParseException;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.provider.MediaStore.Images;
 import android.provider.MediaStore.MediaColumns;
 import android.provider.MediaStore.Video;
 import android.text.format.Time;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -41,6 +45,8 @@ import android.widget.Toast;
 public class ShaveDogActivity extends Activity {
     private static DatagramSocket mSocket;
     private static final String[] PROJECTION;
+    static String algorithm = "SHA1";
+
     private StringBuilder sBuilder;
     private Context mContext;
     String mUserName;
@@ -60,6 +66,8 @@ public class ShaveDogActivity extends Activity {
     TextView details, welcome;
     WifiManager wifi;
     DhcpInfo dhcp;
+    ShaveService mShaveService;
+    ServiceConnection mConnection;
 
     @Override
     public void onCreate( Bundle savedInstanceState ) {
@@ -67,6 +75,7 @@ public class ShaveDogActivity extends Activity {
         setContentView( R.layout.main );
         mContext = this;
         initNetworkStuff();
+        initShaveServiceStuff();
         details = ( TextView ) findViewById( R.id.details );
         welcome = ( TextView ) findViewById( R.id.welcome );
         sBuilder = new StringBuilder();
@@ -81,7 +90,6 @@ public class ShaveDogActivity extends Activity {
         } catch ( Exception e ) {
             e.printStackTrace();
         }
-
     }
 
     @Override
@@ -95,11 +103,6 @@ public class ShaveDogActivity extends Activity {
     public boolean onOptionsItemSelected( MenuItem item ) {
         // Handle item selection
         switch ( item.getItemId() ) {
-            case R.id.dump_image_data:
-                welcome.setVisibility( View.GONE );
-                details.setVisibility( View.VISIBLE );
-                dumpImageData();
-                return true;
 
             case R.id.about:
                 Intent intent = new Intent();
@@ -119,13 +122,30 @@ public class ShaveDogActivity extends Activity {
                 this.setCredentials();
                 return true;
 
-            case R.id.dump_img_file:
-                this.dumpImageFile();
-                return true;
+                /*
+                 * case R.id.dump_image_data: welcome.setVisibility( View.GONE
+                 * ); details.setVisibility( View.VISIBLE ); dumpImageData();
+                 * return true;
+                 */
 
-            case R.id.md5_img_file:
-                this.getHashOfImage();
-                return true;
+                // case R.id.hash_img_file:
+                // welcome.setVisibility( View.GONE );
+                // details.setVisibility( View.VISIBLE );
+                // this.getHashOfImage();
+                // return true;
+                //
+                // case R.id.hash_video_file:
+                // welcome.setVisibility( View.GONE );
+                // details.setVisibility( View.VISIBLE );
+                // this.getHashOfVideo();
+                // return true;
+                //
+                // case R.id.flip_algo:
+                // if ( algorithm.equals( "SHA1" ) ) {
+                // algorithm = "MD5";
+                // } else {
+                // algorithm = "SHA1";
+                // }
 
             default:
                 return super.onOptionsItemSelected( item );
@@ -143,8 +163,7 @@ public class ShaveDogActivity extends Activity {
             }
             String searchString = Definitions.QUERY_LIST + ":" + mUserName + ":" + getOurIp().toString().replace( "/", "" ) + Definitions.END_DELIM;
             Log.d( "XXXX", "searchString = " + searchString );
-            DatagramPacket sendPacket = new DatagramPacket( searchString.getBytes(), searchString.length(), getBroadcastAddress(),
-                    Definitions.SERVER_PORT );
+            DatagramPacket sendPacket = new DatagramPacket( searchString.getBytes(), searchString.length(), getBroadcastAddress(), Definitions.SERVER_PORT );
             Log.d( "XXXX", "gonna send broadcast for : " + Definitions.QUERY_LIST );
             Log.d( "XXXX", "broadcast packet : " + new String( sendPacket.getData() ) );
 
@@ -174,7 +193,7 @@ public class ShaveDogActivity extends Activity {
             quads[ k ] = ( byte ) ( ( broadcast >> k * 8 ) & 0xFF );
         Log.d( "XXXX", "broadcast address here = " + InetAddress.getByAddress( quads ).getHostAddress() );
         return InetAddress.getByAddress( quads );
-    } 
+    }
 
     private void dumpImageData() {
 
@@ -242,7 +261,7 @@ public class ShaveDogActivity extends Activity {
     }
 
     private void dumpImageFile() {
-        Cursor mediaCursor = getContentResolver().query( Images.Media.EXTERNAL_CONTENT_URI, PROJECTION, MediaColumns.DATA + " like '%/DCIM/%'", null, null );
+        Cursor mediaCursor = getContentResolver().query( Video.Media.EXTERNAL_CONTENT_URI, PROJECTION, MediaColumns.DATA + " like '%/DCIM/%'", null, null );
         if ( mediaCursor != null ) {
             mediaCursor.moveToFirst();
             File imageFile = new File( mediaCursor.getString( 1 ) );
@@ -265,13 +284,55 @@ public class ShaveDogActivity extends Activity {
     }
 
     private void getHashOfImage() {
-        Cursor mediaCursor = getContentResolver().query( Video.Media.EXTERNAL_CONTENT_URI, PROJECTION, MediaColumns.DATA + " like '%/DCIM/%'", null, null );
-        if ( mediaCursor != null ) {
-            mediaCursor.moveToFirst();
-            File imageFile = new File( mediaCursor.getString( 1 ) );
-            getFinger( imageFile );
+        Cursor mediaCursor = getContentResolver().query( Images.Media.EXTERNAL_CONTENT_URI, PROJECTION, MediaColumns.DATA + " like '%/DCIM/%'", null, null );
+        StringBuilder show = new StringBuilder();
 
-           
+        if ( mediaCursor != null ) {
+            if ( mediaCursor.getCount() > 0 ) {
+                mediaCursor.moveToFirst();
+                do {
+                    File imageFile = new File( mediaCursor.getString( 1 ) );
+                    // show.append( getFinger( imageFile ) );
+                    testApi( mediaCursor.getString( 1 ) );
+                } while ( mediaCursor.moveToNext() );
+
+                details.setText( show );
+            } else {
+                String toastText = getResources().getString( R.string.no_images_found );
+                Toast toast = Toast.makeText( mContext, toastText, Toast.LENGTH_SHORT );
+                toast.show();
+            }
+        } else {
+            String toastText = getResources().getString( R.string.no_images_found );
+            Toast toast = Toast.makeText( mContext, toastText, Toast.LENGTH_SHORT );
+            toast.show();
+        }
+
+    }
+
+    private void getHashOfVideo() {
+        Cursor mediaCursor = getContentResolver().query( Video.Media.EXTERNAL_CONTENT_URI, PROJECTION, MediaColumns.DATA + " like '%/DCIM/%'", null, null );
+        StringBuilder show = new StringBuilder();
+
+        if ( mediaCursor != null ) {
+            if ( mediaCursor.getCount() > 0 ) {
+                mediaCursor.moveToFirst();
+                do {
+                    File videoFile = new File( mediaCursor.getString( 1 ) );
+                    // show.append( getFinger( videoFile ) );
+                    testApi( mediaCursor.getString( 1 ) );
+
+                } while ( mediaCursor.moveToNext() );
+                details.setText( show );
+            } else {
+                String toastText = getResources().getString( R.string.no_images_found );
+                Toast toast = Toast.makeText( mContext, toastText, Toast.LENGTH_SHORT );
+                toast.show();
+            }
+        } else {
+            String toastText = getResources().getString( R.string.no_videos_found );
+            Toast toast = Toast.makeText( mContext, toastText, Toast.LENGTH_SHORT );
+            toast.show();
         }
 
     }
@@ -327,78 +388,85 @@ public class ShaveDogActivity extends Activity {
         return "";
     }
 
-    void getFinger( File file ) {
-        
+    String getFinger( File file ) {
+
+        StringBuilder logBuffer = new StringBuilder();
         byte[] hashResult;
         long beforeTime = 0, afterTime;
-        Log.d( "XXXX", "filename here = " + file.getName() );
         long fileLength = file.length();
-        Log.d( "XXXX", "fileLength here = " + fileLength );
+
+        // Change these params, for different sampling rates:
+        int BUFFER_LIMIT = 2000000;
+        int NUMBER_OF_SAMPLES = 3;
+        int SAMPLE_SIZE_PERCENT = 2;
+        // Ensure that this corresponds to NUMBER_OF_SAMPLES!!
+        double SAMPLE_OFFSET_PERCENT[] = {
+            0,
+            0.3,
+            0.6
+        };
+
+        Log.d( "XXXX", "filename here = " + file.getName() + ", file length = " + fileLength );
+        logBuffer.append( "algorithm used = " + algorithm + "\n" );
+        logBuffer.append( "filename = " + file.getName() + "\n" );
+        logBuffer.append( "filesize = " + file.length() + " bytes" + "\n" );
+        logBuffer.append( "chunk size = " + BUFFER_LIMIT + "\n" );
+
         // mask here is:
-        // | 0-10% | 40-50% | 60-80% | 90-100% |
+        // | 0-2% | 30-32% | 60-62% |
 
-        long sampleSize[] = new long[ 4 ];
-        long sampleOffset[] = new long[ 4 ];
-        
+        long sampleSize[] = new long[ NUMBER_OF_SAMPLES ];
+        long sampleOffset[] = new long[ NUMBER_OF_SAMPLES ];
 
-        final int BUFFER_LIMIT = 2000000;
         byte buffer[] = new byte[ BUFFER_LIMIT ];
 
-        
-
         // sample sizes
-        sampleSize[ 0 ] = ( long ) ( 0.1 * fileLength );
-        sampleSize[ 1 ] = ( long ) ( 0.1 * fileLength );
-        sampleSize[ 2 ] = ( long ) ( 0.2 * fileLength );
-        sampleSize[ 3 ] = ( long ) ( 0.1 * fileLength );
+        for ( int i = 0; i < NUMBER_OF_SAMPLES; i++ ) {
+            sampleSize[ i ] = ( long ) ( ( ( double ) SAMPLE_SIZE_PERCENT / 100 ) * fileLength );
+            sampleOffset[ i ] = ( long ) ( SAMPLE_OFFSET_PERCENT[ i ] * fileLength );
 
-        for ( int i = 0; i < 4; i++ ) {
             Log.d( "XXXX", "sampleSizes [" + i + "] = " + sampleSize[ i ] );
-        }
+            logBuffer.append( "sampleSizes [" + i + "] = " + sampleSize[ i ] + "\n" );
 
-        // sample offsets
-        sampleOffset[ 0 ] = 0;
-        sampleOffset[ 1 ] = ( long ) ( 0.3 * fileLength );
-        sampleOffset[ 2 ] = ( long ) ( 0.6 * fileLength );
-        sampleOffset[ 3 ] = ( long ) ( 0.9 * fileLength );
-
-        for ( int i = 0; i < 4; i++ ) {
             Log.d( "XXXX", "sampleOffset [" + i + "] = " + sampleOffset[ i ] );
+            logBuffer.append( "sampleOffset [" + i + "] = " + sampleOffset[ i ] + "\n" );
         }
-        
-        
+
         try {
 
-            MessageDigest digest = java.security.MessageDigest.getInstance( "MD5" );
+            MessageDigest digest = java.security.MessageDigest.getInstance( algorithm );
             FileInputStream fIs = new FileInputStream( file );
             RandomAccessFile ourFile = new RandomAccessFile( file, "r" );
             Date before = new Date();
             beforeTime = before.getTime();
-            for ( int i = 0; i < 4; i++ ) {
-                ourFile.seek(sampleOffset[i]);
+            for ( int i = 0; i < NUMBER_OF_SAMPLES; i++ ) {
+                ourFile.seek( sampleOffset[ i ] );
                 if ( sampleSize[ i ] > BUFFER_LIMIT ) {
                     long numberOfChunks;
                     numberOfChunks = sampleSize[ i ] / BUFFER_LIMIT;
-                    for ( int j = 0; j < numberOfChunks; j++ ) {
-                        Log.d("XXXX", "gonna start reading chunk #: " + ( ( int ) sampleOffset[ i ] + j * BUFFER_LIMIT ));
-                        //fIs.read( buffer, ( ( int ) sampleOffset[ i ] + j * BUFFER_LIMIT ), BUFFER_LIMIT );
-                        ourFile.read(buffer, 0, BUFFER_LIMIT);
-                        digest.update(buffer, 0, buffer.length);
+                    for ( int j = 0; j <= numberOfChunks; j++ ) {
+                        Log.d( "XXXX", "gonna start reading chunk #: " + ( ( int ) sampleOffset[ i ] + j * BUFFER_LIMIT ) );
+
+                        ourFile.read( buffer, 0, BUFFER_LIMIT );
+                        digest.update( buffer, 0, buffer.length );
                     }
                 } else {
-                       ourFile.read(buffer, 0, BUFFER_LIMIT);
-                      digest.update(buffer, 0, buffer.length);
+                    ourFile.read( buffer, 0, BUFFER_LIMIT );
+                    digest.update( buffer, 0, buffer.length );
                 }
             }
             hashResult = digest.digest();
-            
-            StringBuffer hexString = new StringBuffer();
-            for ( int i = 0; i < hashResult.length; i++ ) {
-                hexString.append( Integer.toHexString( 0xFF & hashResult[ i ] ) );
-            }
-            
-            Log.d("XXXX", "hexString = " + hexString);
-            
+            String base64Rresult = Base64.encodeToString( hashResult, Base64.NO_PADDING | Base64.NO_WRAP | Base64.URL_SAFE );
+
+            /*
+             * StringBuffer hexString = new StringBuffer(); for ( int i = 0; i <
+             * hashResult.length; i++ ) { hexString.append( Integer.toHexString(
+             * 0xFF & hashResult[ i ] ) ); }
+             */
+
+            Log.d( "XXXX", "base64Rresult = " + base64Rresult );
+            logBuffer.append( "base64Result = " + base64Rresult + "\n" );
+
         } catch ( IOException e ) {
             e.printStackTrace();
         } catch ( NoSuchAlgorithmException e ) {
@@ -406,12 +474,154 @@ public class ShaveDogActivity extends Activity {
         } catch ( Exception e ) {
             e.printStackTrace();
         }
-        
+
         Date after = new Date();
         afterTime = after.getTime();
-        
-        Log.d("XXXX", "time taken = " + (afterTime - beforeTime));
+
+        Log.d( "XXXX", "time taken = " + ( afterTime - beforeTime ) + " ms" );
+        logBuffer.append( "time taken = " + ( afterTime - beforeTime ) + " ms" + "\n" );
+        logBuffer.append( "///////////////////////////// " + "\n\n" );
+
+        return logBuffer.toString();
     }
+
+    String testApi( String filePath ) {
+
+        // Change these params, for different sampling rates:
+        int BUFFER_LIMIT = 2000000;
+        int NUMBER_OF_SAMPLES = 3;
+        int SAMPLE_SIZE_PERCENT = 2;
+        // Ensure that this corresponds to NUMBER_OF_SAMPLES!!
+        double SAMPLE_OFFSET_PERCENT[] = {
+            0,
+            0.3,
+            0.6
+        };
+
+        String algorithm = "SHA1";
+        String base64Result = null;
+        File file = new File( filePath );
+        if ( file.exists() == false ) {
+            Log.d( "XXXX", "MediaAccessor2.calculateFingerprint: file doesn't exist, returning null.." );
+            return null;
+        }
+
+        byte[] hashResult;
+        long beforeTime = 0, afterTime;
+        long fileLength = file.length();
+
+        Log.d( "XXXX", "MediaAccessor2.calculateFingerprint: fingerprinting file - " + file.getName() + ", fileSize = " + fileLength );
+
+        // mask here is:
+        // | 0-2% | 30-32% | 60-62% |
+
+        long sampleSize[] = new long[ NUMBER_OF_SAMPLES ];
+        long sampleOffset[] = new long[ NUMBER_OF_SAMPLES ];
+
+        byte buffer[] = new byte[ BUFFER_LIMIT ];
+
+        for ( int i = 0; i < NUMBER_OF_SAMPLES; i++ ) {
+            sampleSize[ i ] = ( long ) ( ( ( double ) SAMPLE_SIZE_PERCENT / 100 ) * fileLength );
+            sampleOffset[ i ] = ( long ) ( SAMPLE_OFFSET_PERCENT[ i ] * fileLength );
+            Log.d( "XXXX", "MediaAccessor2.calculateFingerprint: sampleSizes [" + i + "] = " + sampleSize[ i ] );
+            Log.d( "XXXX", "MediaAccessor2.calculateFingerprint: sampleOffset [" + i + "] = " + sampleOffset[ i ] );
+        }
+
+        try {
+            MessageDigest digest = java.security.MessageDigest.getInstance( algorithm );
+            RandomAccessFile ourFile = new RandomAccessFile( file, "r" );
+            Date before = new Date();
+            beforeTime = before.getTime();
+            for ( int i = 0; i < NUMBER_OF_SAMPLES; i++ ) {
+                ourFile.seek( sampleOffset[ i ] );
+                if ( sampleSize[ i ] > BUFFER_LIMIT ) {
+                    long numberOfChunks;
+                    numberOfChunks = sampleSize[ i ] / BUFFER_LIMIT;
+                    for ( int j = 0; j <= numberOfChunks; j++ ) {
+                        Log.d( "XXXX", "MediaAccessor2.calculateFingerprint: gonna start reading chunk #: " + ( ( int ) sampleOffset[ i ] + j * BUFFER_LIMIT ) );
+                        ourFile.read( buffer, 0, BUFFER_LIMIT );
+                        digest.update( buffer, 0, buffer.length );
+                    }
+                } else {
+                    ourFile.read( buffer, 0, BUFFER_LIMIT );
+                    digest.update( buffer, 0, buffer.length );
+                }
+            }
+            hashResult = digest.digest();
+            base64Result = Base64.encodeToString( hashResult, Base64.NO_PADDING | Base64.NO_WRAP | Base64.URL_SAFE );
+
+            Log.d( "XXXX", "MediaAccessor2.calculateFingerprint: base64Rresult = " + base64Result );
+
+        } catch ( IOException e ) {
+            e.printStackTrace();
+        } catch ( NoSuchAlgorithmException e ) {
+            e.printStackTrace();
+        } catch ( Exception e ) {
+            e.printStackTrace();
+        }
+
+        Date after = new Date();
+        afterTime = after.getTime();
+        Log.d( "XXXX", "MediaAccessor2.calculateFingerprint: time taken to fprint = " + ( afterTime - beforeTime ) + " ms" );
+
+        return base64Result;
+
+    }
+
+    void getFullfinger( File file ) {
+        long beforeM, afterM;
+        Log.d( "XXXX", "FullFinger!!! filename = " + file.getName() + " fileSize = " + file.length() );
+
+        final int BUFFER_LIMIT = 2000000;
+        StringBuffer hexString = new StringBuffer();
+        byte buffer[] = new byte[ BUFFER_LIMIT ];
+        Date before = new Date();
+        beforeM = before.getTime();
+        try {
+            MessageDigest digest = java.security.MessageDigest.getInstance( "SHA1" );
+            FileInputStream fIs = new FileInputStream( file );
+            while ( -1 != fIs.read( buffer, 0, buffer.length ) ) {
+                digest.update( buffer );
+            }
+            fIs.close();
+            byte messageDigest[] = digest.digest();
+
+            for ( int i = 0; i < messageDigest.length; i++ ) {
+                hexString.append( Integer.toHexString( 0xFF & messageDigest[ i ] ) );
+            }
+            Date after = new Date();
+            afterM = after.getTime();
+            Log.d( "XXXX", "full finger = " + hexString );
+            Log.d( "XXXX", "time taken for this = " + ( afterM - beforeM ) );
+
+        } catch ( Exception e ) {
+            Log.d( "XXXX", "dumpImageFile error" );
+            e.printStackTrace();
+        }
+    }
+
+    void initShaveServiceStuff() {
+        mConnection = new ServiceConnection() {
+            @Override
+            public void onServiceDisconnected( ComponentName className ) {
+                mShaveService = null;
+                Toast.makeText( mContext, R.string.shave_service_disconnected, Toast.LENGTH_SHORT ).show();
+            }
+
+            @Override
+            public void onServiceConnected( ComponentName name, IBinder service ) {
+                mShaveService = ( ( ShaveService.ShaveBinder ) service ).getService();
+                Toast.makeText( mContext, R.string.shave_service_connected, Toast.LENGTH_SHORT ).show();
+            }
+        };
+
+        doBindService();
+    }
+
+    void doBindService() {
+        bindService( new Intent( this, ShaveService.class ), mConnection, Context.BIND_AUTO_CREATE );
+    }
+
 }
 
 // test code:
@@ -450,3 +660,5 @@ public class ShaveDogActivity extends Activity {
  * e.printStackTrace(); }
  */
 
+// return Base64.encodeToString(md.digest(), Base64.NO_PADDING | Base64.NO_WRAP
+// | Base64.URL_SAFE);

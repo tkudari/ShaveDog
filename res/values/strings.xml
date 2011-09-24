@@ -29,6 +29,12 @@
 	<string name="no_images_found">No images found/ mediascanner still running/ SD card mounted elsewhere</string>
 	<string name="no_videos_found">No videos found/ mediascanner still running/ SD card mounted elsewhere</string>
 	<string name="flip_algo">Flip Hash algorithm</string>
+	<string name="shave_service_started">ShaveService\'s up \&amp; running</string>
+	<string name="shave_service_stopped">ShaveService\'s stopped, boo!</string>
+	<string name="this_the_string">this the string</string>
+	<string name="shave_service_connected">ShaveService\'s connected</string>
+	<string name="shave_service_disconnected">ShaveService\'s disconnected</string>
+	
 	
 	
    	
