@@ -6,6 +6,8 @@ import java.net.DatagramSocket;
 import java.net.URL;
 import java.util.StringTokenizer;
 
+import com.tejus.shavedog.activity.ShaveDogActivity;
+
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -27,7 +29,7 @@ public class Server implements Runnable {
             try {
                 mSocket.receive( packet );
                 Log.d("XXXX", "Stuff received by Server = " + new String(packet.getData()) );
-                dealWithReceivedPacket(new String(packet.getData()));
+                //dealWithReceivedPacket(new String(packet.getData()));
                 
                 
             } catch ( IOException e ) {

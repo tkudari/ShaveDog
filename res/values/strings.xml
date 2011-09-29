@@ -34,6 +34,9 @@
 	<string name="this_the_string">this the string</string>
 	<string name="shave_service_connected">ShaveService\'s connected</string>
 	<string name="shave_service_disconnected">ShaveService\'s disconnected</string>
+	<string name="new_request">You have a new Request!</string>
+	<string name="wants">wants to be friends with you</string>
+	
 	
 	
 	

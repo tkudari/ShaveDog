@@ -20,8 +20,12 @@ public class Definitions {
     public static String COMMAND_DELIM = ":";
     public static int COMMAND_WORD_LENGTH = 4;
     
-
     
+    //Intent Names:
+    public static String INTENT_QUERY_LIST= "com.tejus.shavedog.query_list";
+    
+
+    //
   
 
 }

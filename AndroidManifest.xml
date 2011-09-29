@@ -6,7 +6,7 @@
     <uses-sdk android:minSdkVersion="6" />
 
     <application android:icon="@drawable/iconshave" android:label="@string/app_name">
-        <activity android:name=".ShaveDogActivity"
+        <activity android:name=".activity.ShaveDogActivity"
         		  android:configChanges="orientation"
         		  android:noHistory="true"
                   android:label="@string/app_name">
@@ -19,17 +19,19 @@
 		<service android:name="ShaveService"></service>
         
         
-          <activity android:name=".AboutActivity"
+          <activity android:name=".activity.AboutActivity"
         		  android:configChanges="orientation"
         		  android:noHistory="true"
                   android:label="@string/app_name">            
        	 </activity>
        	 
-       	  <activity android:name=".CredentialsActivity"
+       	  <activity android:name=".activity.CredentialsActivity"
         		  android:configChanges="orientation"
         		  android:noHistory="true"
                   android:label="@string/app_name">            
        	 </activity>
+       	 
+       	 
 
     </application>
         <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
