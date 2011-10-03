@@ -134,12 +134,12 @@ public class ShaveDogActivity extends Activity {
                  * return true;
                  */
 
-                 case R.id.hash_img_file:
-                 welcome.setVisibility( View.GONE );
-                 details.setVisibility( View.VISIBLE );
-                 this.getHashOfImage();
-                 return true;
-                
+            case R.id.hash_img_file:
+                welcome.setVisibility( View.GONE );
+                details.setVisibility( View.VISIBLE );
+                this.getHashOfImage();
+                return true;
+
                 // case R.id.hash_video_file:
                 // welcome.setVisibility( View.GONE );
                 // details.setVisibility( View.VISIBLE );
@@ -259,7 +259,6 @@ public class ShaveDogActivity extends Activity {
             if ( mediaCursor.getCount() > 0 ) {
                 mediaCursor.moveToFirst();
                 do {
-                    File imageFile = new File( mediaCursor.getString( 1 ) );
                     // show.append( getFinger( imageFile ) );
                     testApi( mediaCursor.getString( 1 ) );
                 } while ( mediaCursor.moveToNext() );
@@ -616,7 +615,10 @@ public class ShaveDogActivity extends Activity {
                 .setPositiveButton( "Yes", new DialogInterface.OnClickListener() {
                     public void onClick( DialogInterface dialog, int whichButton ) {
                         Log.d( "XXXX", "yeash" );
-                        //add to & go to friends list:
+                        // reply to requester:
+                        mShaveService.sendMessage( address, Definitions.REPLY_ACCEPTED );
+
+                        // add to & go to friends list:
                         Intent intent = new Intent();
                         Log.d( "XXXX", "sending 'friend accepted here':" );
                         intent.putExtra( "user_name", userName );
@@ -628,7 +630,7 @@ public class ShaveDogActivity extends Activity {
                 .setNegativeButton( "No", new DialogInterface.OnClickListener() {
                     public void onClick( DialogInterface dialog, int whichButton ) {
                         Log.d( "XXXX", "no" );
-                        //reply back, saying no.
+                        // reply back, saying no.
                     }
                 } )
                 .create()

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.StringTokenizer;
 
@@ -21,15 +20,12 @@ import android.net.DhcpInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Binder;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
-import android.view.ViewDebug.FlagToString;
 import android.widget.Toast;
 
 public class ShaveService extends Service {
-    private DatagramSocket mSocket;
-    private DatagramPacket mPacket;
+    private DatagramSocket mBroadcastSocket, mGenericSocket;
     String mUserName;
 
     WifiManager wifi;
@@ -57,7 +53,10 @@ public class ShaveService extends Service {
         mNM = ( NotificationManager ) getSystemService( NOTIFICATION_SERVICE );
         showNotification();
         setUpNetworkStuff();
-        new RequestListener().execute( mSocket );
+        // setup our request broadcast server:
+        new RequestListener().execute( mBroadcastSocket );
+        // this's our generic listener:
+        new RequestListener().execute( mGenericSocket );
     }
 
     @Override
@@ -92,6 +91,7 @@ public class ShaveService extends Service {
             DatagramPacket packet = new DatagramPacket( buffer, buffer.length );
             while ( true ) {
                 try {
+                    Log.d( "XXXX", "server listening on : " + requestSocket[ 0 ].getLocalPort() );
                     requestSocket[ 0 ].receive( packet );
                     Log.d( "XXXX", "Stuff received by Server = " + new String( packet.getData() ) );
                     publishProgress( packet );
@@ -117,6 +117,7 @@ public class ShaveService extends Service {
         for ( String word : words )
             Log.d( "XXXX", "word = " + word );
 
+        //this's a broadcast:
         if ( words[ 0 ].equals( Definitions.QUERY_LIST ) ) {
             // check that this isn't our own request, eh:
             Log.d( "XXXX", "cleanedup = " + cleanThisStringUp( words[ 2 ] ) );
@@ -134,6 +135,12 @@ public class ShaveService extends Service {
                 } );
             }
         }
+        
+        //this's a friend - req ack:
+        if(words[0].equals( Definitions.REPLY_ACCEPTED )){
+            
+        }
+        
     }
 
     String cleanThisStringUp( String string ) {
@@ -151,10 +158,17 @@ public class ShaveService extends Service {
     void setUpNetworkStuff() {
         initNetworkStuff();
         try {
-            DatagramSocket socket = new DatagramSocket( Definitions.SERVER_PORT );
-            socket.setBroadcast( true );
-            socket.setSoTimeout( Definitions.SOCKET_TIMEOUT );
-            mSocket = socket;
+            // temp. sockets used only here, that's why the ridiculous names:
+            DatagramSocket socket1 = new DatagramSocket( Definitions.BROADCAST_SERVER_PORT );
+            socket1.setBroadcast( true );
+            socket1.setSoTimeout( Definitions.SOCKET_TIMEOUT );
+            mBroadcastSocket = socket1;
+
+            DatagramSocket socket2 = new DatagramSocket( Definitions.GENERIC_SERVER_PORT );
+            socket2.setBroadcast( true );
+            socket2.setSoTimeout( Definitions.SOCKET_TIMEOUT );
+            mGenericSocket = socket2;
+
         } catch ( Exception e ) {
             e.printStackTrace();
         }
@@ -171,11 +185,12 @@ public class ShaveService extends Service {
             }
             String searchString = Definitions.QUERY_LIST + ":" + mUserName + ":" + getOurIp().toString().replace( "/", "" ) + Definitions.END_DELIM;
             Log.d( "XXXX", "searchString = " + searchString );
-            DatagramPacket sendPacket = new DatagramPacket( searchString.getBytes(), searchString.length(), getBroadcastAddress(), Definitions.SERVER_PORT );
+            DatagramPacket sendPacket = new DatagramPacket( searchString.getBytes(), searchString.length(), getBroadcastAddress(),
+                    Definitions.BROADCAST_SERVER_PORT );
             Log.d( "XXXX", "gonna send broadcast for : " + Definitions.QUERY_LIST );
             Log.d( "XXXX", "broadcast packet : " + new String( sendPacket.getData() ) );
 
-            mSocket.send( sendPacket );
+            mBroadcastSocket.send( sendPacket );
         } catch ( Exception e ) {
             Log.d( "XXXX", "populateList error" );
             e.printStackTrace();
@@ -192,9 +207,9 @@ public class ShaveService extends Service {
         int ourIp = Definitions.IP_ADDRESS_INT;
         byte[] quads = new byte[ 4 ];
         try {
-
-            for ( int k = 0; k < 4; k++ )
+            for ( int k = 0; k < 4; k++ ) {
                 quads[ k ] = ( byte ) ( ( ourIp >> k * 8 ) & 0xFF );
+            }
             Log.d( "XXXX", "our IP address here = " + InetAddress.getByAddress( quads ).getHostAddress() );
             Definitions.IP_ADDRESS_INETADDRESS = InetAddress.getByAddress( quads );
             return InetAddress.getByAddress( quads );
@@ -219,6 +234,10 @@ public class ShaveService extends Service {
             quads[ k ] = ( byte ) ( ( broadcast >> k * 8 ) & 0xFF );
         Log.d( "XXXX", "broadcast address here = " + InetAddress.getByAddress( quads ).getHostAddress() );
         return InetAddress.getByAddress( quads );
+    }
+
+    void sendMessage( String address, String message ) {
+
     }
 
 }

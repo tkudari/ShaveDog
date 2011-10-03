@@ -17,7 +17,6 @@ import android.util.Log;
 import android.widget.SimpleCursorAdapter;
 
 public class FriendsActivity extends ListActivity {
-    static HashMap<String, String> friendMap = new HashMap<String, String>();
     private BroadcastReceiver mLocalIntentReceiver = new LocalIntentReceiver();
     ShaveDbAdapter dbAdapter;
     Cursor mCursor;
@@ -45,10 +44,9 @@ public class FriendsActivity extends ListActivity {
             String[] from = new String[] { ShaveDbAdapter.KEY_USERNAME };
             int[] to = new int[] { R.id.label };
 
-            // Now create an array adapter and set it to display using our row
-            SimpleCursorAdapter notes = new SimpleCursorAdapter(this,
+            SimpleCursorAdapter friends = new SimpleCursorAdapter(this,
                     R.layout.friend_row, mCursor, from, to);
-            setListAdapter(notes);
+            setListAdapter(friends);
         
     }
 
