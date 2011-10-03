@@ -17,12 +17,13 @@ public class Definitions {
     public static String defaultUserName = "defaultUserName";
     public static int MIN_USERNAME_LENGTH = 3;
     public static String END_DELIM = "*";
-    public static String COMMAND_DELIM = ":";
+    public static String COMMAND_DELIM = ":*";
     public static int COMMAND_WORD_LENGTH = 4;
     
     
     //Intent Names:
     public static String INTENT_QUERY_LIST= "com.tejus.shavedog.query_list";
+    public static String INTENT_FRIEND_ACCEPTED= "com.tejus.shavedog.friend_accepted";
     
 
     //

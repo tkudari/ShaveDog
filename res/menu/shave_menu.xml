@@ -17,10 +17,10 @@
           
 
           
-   <!-- <item android:id="@+id/hash_img_file"
+   <item android:id="@+id/hash_img_file"
           android:title="@string/hash_img_file" />
     
-    <item android:id="@+id/hash_video_file"
+    <!-- <item android:id="@+id/hash_video_file"
           android:title="@string/hash_video_file" />
           
     <item android:id="@+id/flip_algo"

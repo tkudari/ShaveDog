@@ -3,8 +3,10 @@ package com.tejus.shavedog.resources;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 public class ShaveDbAdapter {
 
@@ -41,7 +43,16 @@ public class ShaveDbAdapter {
 
     public long insertFriend( String userName, String address, String status ) {
         ContentValues initialValues = createContentValues( userName, address, status );
-        return database.insert( DATABASE_TABLE, null, initialValues );
+        Log.d("XXXX", "gonna start dumping cursor: ");
+        DatabaseUtils.dumpCursor( database.query( DATABASE_TABLE, new String[] {KEY_USERNAME}, null, null, null, null, null  ) );
+
+        if (database.query( DATABASE_TABLE, new String[] {KEY_USERNAME}, KEY_USERNAME + " = '" + userName + "'", null, null, null, null  ).getCount() == 0) {
+            Log.d("XXXX: ", "inserting new friend: " + userName);
+            return database.insert( DATABASE_TABLE, null, initialValues );
+        } else {
+            Log.d("XXXX: ", "friend already exists: " + userName);
+        }
+        return 0;
     }
 
     public boolean updateFriend( long rowId, String userName, String address, String status ) {
@@ -68,7 +79,7 @@ public class ShaveDbAdapter {
 
     private ContentValues createContentValues( String userName, String address, String status ) {
         ContentValues values = new ContentValues();
-        values.put( KEY_USERNAME, KEY_USERNAME );
+        values.put( KEY_USERNAME, userName );
         values.put( KEY_ADDRESS, address );
         values.put( KEY_STATUS, status );
         return values;

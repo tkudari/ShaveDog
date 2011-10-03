@@ -17,12 +17,9 @@ import java.util.Date;
 
 import com.tejus.shavedog.Definitions;
 import com.tejus.shavedog.R;
+
 import com.tejus.shavedog.ShaveService;
-import com.tejus.shavedog.R.drawable;
-import com.tejus.shavedog.R.id;
-import com.tejus.shavedog.R.layout;
-import com.tejus.shavedog.R.menu;
-import com.tejus.shavedog.R.string;
+
 import com.tejus.shavedog.ShaveService.ShaveBinder;
 
 import android.app.Activity;
@@ -137,12 +134,12 @@ public class ShaveDogActivity extends Activity {
                  * return true;
                  */
 
-                // case R.id.hash_img_file:
-                // welcome.setVisibility( View.GONE );
-                // details.setVisibility( View.VISIBLE );
-                // this.getHashOfImage();
-                // return true;
-                //
+                 case R.id.hash_img_file:
+                 welcome.setVisibility( View.GONE );
+                 details.setVisibility( View.VISIBLE );
+                 this.getHashOfImage();
+                 return true;
+                
                 // case R.id.hash_video_file:
                 // welcome.setVisibility( View.GONE );
                 // details.setVisibility( View.VISIBLE );
@@ -278,7 +275,6 @@ public class ShaveDogActivity extends Activity {
             Toast toast = Toast.makeText( mContext, toastText, Toast.LENGTH_SHORT );
             toast.show();
         }
-
     }
 
     private void getHashOfVideo() {
@@ -519,7 +515,7 @@ public class ShaveDogActivity extends Activity {
                 }
             }
             hashResult = digest.digest();
-            base64Result = Base64.encodeToString( hashResult, Base64.NO_PADDING | Base64.NO_WRAP | Base64.URL_SAFE );
+            base64Result = Base64.encodeToString( hashResult, 0 );
 
             Log.d( "XXXX", "MediaAccessor2.calculateFingerprint: base64Rresult = " + base64Result );
 
@@ -622,10 +618,11 @@ public class ShaveDogActivity extends Activity {
                         Log.d( "XXXX", "yeash" );
                         //add to & go to friends list:
                         Intent intent = new Intent();
-                        intent.setClass( mContext, FriendsActivity.class );
-                        intent.putExtra( "username", userName );
+                        Log.d( "XXXX", "sending 'friend accepted here':" );
+                        intent.putExtra( "user_name", userName );
                         intent.putExtra( "address", address );
-                        //startActivity( intent );
+                        intent.setClass( mContext, FriendsActivity.class );
+                        startActivity( intent );
                     }
                 } )
                 .setNegativeButton( "No", new DialogInterface.OnClickListener() {

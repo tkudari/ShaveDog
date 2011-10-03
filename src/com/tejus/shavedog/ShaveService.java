@@ -122,7 +122,7 @@ public class ShaveService extends Service {
             Log.d( "XXXX", "cleanedup = " + cleanThisStringUp( words[ 2 ] ) );
             if ( cleanThisStringUp( words[ 2 ] ).equals( cleanThisStringUp( Definitions.IP_ADDRESS_INETADDRESS.toString() ) ) ) {
                 Log.d( "XXXX", "yep, it's ours" );
-                // TODO:remove this line!!
+                // TODO:remove this line now here only for testing!!
                 newRequestReceived( new String[] {
                     words[ 1 ],
                     cleanThisStringUp( words[ 2 ] )
