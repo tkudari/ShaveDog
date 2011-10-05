@@ -31,10 +31,12 @@
 	<string name="flip_algo">Flip Hash algorithm</string>
 	<string name="shave_service_started">ShaveService\'s up \&amp; running</string>
 	<string name="shave_service_stopped">ShaveService\'s stopped, boo!</string>
-	<string name="this_the_string">this the string</string>
+	<string name="this_the_string">awesomeness to arrive</string>
 	<string name="shave_service_connected">ShaveService\'s connected</string>
 	<string name="shave_service_disconnected">ShaveService\'s disconnected</string>
 	<string name="wants">wants to be friends with you</string>
+	<string name="no_wifi">No Wi-fi!! Get your shit together!!</string>
+	<string name="friends_list">Friends List</string>
 	
 	
 	

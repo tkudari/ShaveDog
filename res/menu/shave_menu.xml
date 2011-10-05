@@ -15,10 +15,12 @@
 	<item android:id="@+id/set_creds"
           android:title="@string/set_creds" /> 
           
+    <item android:id="@+id/friends_list"
+          android:title="@string/friends_list" />
 
           
-   <item android:id="@+id/hash_img_file"
-          android:title="@string/hash_img_file" />
+  <!--  <item android:id="@+id/hash_img_file"
+          android:title="@string/hash_img_file" />  -->
     
     <!-- <item android:id="@+id/hash_video_file"
           android:title="@string/hash_video_file" />

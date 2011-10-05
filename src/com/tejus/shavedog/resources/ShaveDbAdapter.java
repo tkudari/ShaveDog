@@ -22,6 +22,12 @@ public class ShaveDbAdapter {
         KEY_ADDRESS,
         KEY_STATUS
     };
+    
+   public static int COLUMN_ROWID = 0;
+   public static int COLUMN_USERNAME = 1;
+   public static int COLUMN_ADDRESS = 2;
+   public static int COLUMN_STATUS = 3;
+    
 
     private Context context;
     private SQLiteDatabase database;

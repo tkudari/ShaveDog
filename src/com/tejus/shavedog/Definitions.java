@@ -13,7 +13,7 @@ public class Definitions {
     public static String QUERY_LIST = "query_list";
     public static final String TAG = "XXXX";
     public static final boolean DASHWIRE = true;
-    public static final int SOCKET_TIMEOUT = 500;
+    public static final int SOCKET_TIMEOUT = 1000000; //TODO: decide the correct value?
     public static String USERNAME;
     public static String credsPrefFile = "credsPrefFile";
     public static String prefUserName = "pUserName";
@@ -23,6 +23,7 @@ public class Definitions {
     public static String COMMAND_DELIM = ":*";
     public static int COMMAND_WORD_LENGTH = 4;
     public static String REPLY_ACCEPTED = "yes";
+    public static String REQUEST_LISTING = "show_files";
     
     
     //Intent Names:

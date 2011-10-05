@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.StringTokenizer;
 
+import com.tejus.shavedog.activity.FriendsActivity;
 import com.tejus.shavedog.activity.ShaveDogActivity;
 
 import android.app.Notification;
@@ -117,34 +119,46 @@ public class ShaveService extends Service {
         for ( String word : words )
             Log.d( "XXXX", "word = " + word );
 
-        //this's a broadcast:
+        // this's a broadcast:
         if ( words[ 0 ].equals( Definitions.QUERY_LIST ) ) {
             // check that this isn't our own request, eh:
             Log.d( "XXXX", "cleanedup = " + cleanThisStringUp( words[ 2 ] ) );
             if ( cleanThisStringUp( words[ 2 ] ).equals( cleanThisStringUp( Definitions.IP_ADDRESS_INETADDRESS.toString() ) ) ) {
                 Log.d( "XXXX", "yep, it's ours" );
                 // TODO:remove this line now here only for testing!!
-                newRequestReceived( new String[] {
-                    words[ 1 ],
-                    cleanThisStringUp( words[ 2 ] )
-                } );
+                // newRequestReceived( new String[] {
+                // words[ 1 ],
+                // cleanThisStringUp( words[ 2 ] )
+                // } );
             } else {
                 newRequestReceived( new String[] {
                     words[ 1 ],
                     cleanThisStringUp( words[ 2 ] )
                 } );
             }
+        } else if ( words[ 0 ].equals( Definitions.REPLY_ACCEPTED ) ) {
+            String userName = words[ 1 ];
+            String address = cleanThisStringUp( words[ 2 ] );
+            Log.d( "XXXX", "dealing with pkt: " + userName + ", " + address );
+
+            Intent intent = new Intent();
+            Log.d( "XXXX", "friend ack received.." );
+            intent.putExtra( "user_name", userName );
+            intent.putExtra( "address", address );
+            intent.setClass( this, FriendsActivity.class );
+            intent.addFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
+            startActivity( intent );
         }
-        
-        //this's a friend - req ack:
-        if(words[0].equals( Definitions.REPLY_ACCEPTED )){
-            
+
+        // this's a friend - req ack:
+        if ( words[ 0 ].equals( Definitions.REPLY_ACCEPTED ) ) {
+
         }
-        
+
     }
 
     String cleanThisStringUp( String string ) {
-        return string.replace( "\\?", "" ).replace( "*", "" ).replace( "/", "" );
+        return string.replace( "\\?", "" ).replace( "*", "" ).replace( "//", "" );
     }
 
     void newRequestReceived( String[] requestString ) {
@@ -191,6 +205,11 @@ public class ShaveService extends Service {
             Log.d( "XXXX", "broadcast packet : " + new String( sendPacket.getData() ) );
 
             mBroadcastSocket.send( sendPacket );
+        } catch ( SocketException e ) {
+            if ( e.getMessage().equals( "Network is unreachable" ) ) {
+                Toast.makeText( this, R.string.no_wifi, Toast.LENGTH_SHORT ).show();
+            }
+            e.printStackTrace();
         } catch ( Exception e ) {
             Log.d( "XXXX", "populateList error" );
             e.printStackTrace();
@@ -236,8 +255,17 @@ public class ShaveService extends Service {
         return InetAddress.getByAddress( quads );
     }
 
-    void sendMessage( String address, String message ) {
-
+    public void sendMessage( String address, String message ) {
+        String sendMessage = message + ":" + getOurUserName() + ":" + getOurIp().toString().replace( "/", "" ) + Definitions.END_DELIM;
+        try {
+            Log.d( "XXXX", "destination address = " + InetAddress.getByName( address ) );
+            DatagramPacket sendPacket = new DatagramPacket( sendMessage.getBytes(), sendMessage.getBytes().length, InetAddress.getByName( address ),
+                    Definitions.GENERIC_SERVER_PORT );
+            Log.d( "XXXX", "gonna send out the message:" );
+            mGenericSocket.send( sendPacket );
+        } catch ( Exception e ) {
+            e.printStackTrace();
+        }
     }
 
 }

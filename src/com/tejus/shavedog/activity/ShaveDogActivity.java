@@ -38,6 +38,7 @@ import android.net.DhcpInfo;
 import android.net.ParseException;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.provider.MediaStore.Images;
 import android.provider.MediaStore.MediaColumns;
@@ -128,17 +129,28 @@ public class ShaveDogActivity extends Activity {
                 this.setCredentials();
                 return true;
 
+                
+            case R.id.friends_list:
+                this.gotoFriendsList();
+                return true;
                 /*
                  * case R.id.dump_image_data: welcome.setVisibility( View.GONE
                  * ); details.setVisibility( View.VISIBLE ); dumpImageData();
                  * return true;
                  */
 
-            case R.id.hash_img_file:
-                welcome.setVisibility( View.GONE );
-                details.setVisibility( View.VISIBLE );
-                this.getHashOfImage();
-                return true;
+//            case R.id.hash_img_file:
+                // welcome.setVisibility( View.GONE );
+                // details.setVisibility( View.VISIBLE );
+                // this.getHashOfImage();
+
+                // build list of folders
+
+                
+                
+                
+                // find buckets
+
 
                 // case R.id.hash_video_file:
                 // welcome.setVisibility( View.GONE );
@@ -156,6 +168,13 @@ public class ShaveDogActivity extends Activity {
             default:
                 return super.onOptionsItemSelected( item );
         }
+    }
+
+    private void gotoFriendsList() {
+        Intent intent = new Intent();
+        intent.setClass( this, FriendsActivity.class );
+        
+        startActivity( intent );
     }
 
     private void populateList() {
@@ -252,7 +271,7 @@ public class ShaveDogActivity extends Activity {
     }
 
     private void getHashOfImage() {
-        Cursor mediaCursor = getContentResolver().query( Images.Media.EXTERNAL_CONTENT_URI, PROJECTION, MediaColumns.DATA + " like '%/DCIM/%'", null, null );
+        Cursor mediaCursor = getContentResolver().query( Video.Media.EXTERNAL_CONTENT_URI, PROJECTION, MediaColumns.DATA + " like '%/DCIM/%'", null, null );
         StringBuilder show = new StringBuilder();
 
         if ( mediaCursor != null ) {
@@ -505,16 +524,16 @@ public class ShaveDogActivity extends Activity {
                     numberOfChunks = sampleSize[ i ] / BUFFER_LIMIT;
                     for ( int j = 0; j <= numberOfChunks; j++ ) {
                         Log.d( "XXXX", "MediaAccessor2.calculateFingerprint: gonna start reading chunk #: " + ( ( int ) sampleOffset[ i ] + j * BUFFER_LIMIT ) );
-                        ourFile.read( buffer, 0, BUFFER_LIMIT );
-                        digest.update( buffer, 0, buffer.length );
+                        ourFile.read( buffer, 0, ( int ) sampleSize[ i ] );
+                        digest.update( buffer, 0, ( int ) sampleSize[ i ] );
                     }
                 } else {
-                    ourFile.read( buffer, 0, BUFFER_LIMIT );
-                    digest.update( buffer, 0, buffer.length );
+                    ourFile.read( buffer, 0, ( int ) sampleSize[ i ] );
+                    digest.update( buffer, 0, ( int ) sampleSize[ i ] );
                 }
             }
             hashResult = digest.digest();
-            base64Result = Base64.encodeToString( hashResult, 0 );
+            base64Result = Base64.encodeToString( hashResult, Base64.NO_PADDING | Base64.NO_WRAP | Base64.URL_SAFE );
 
             Log.d( "XXXX", "MediaAccessor2.calculateFingerprint: base64Rresult = " + base64Result );
 
@@ -614,7 +633,6 @@ public class ShaveDogActivity extends Activity {
                 .setMessage( userName + " from " + address + " wants to be friends! \n Accept?" )
                 .setPositiveButton( "Yes", new DialogInterface.OnClickListener() {
                     public void onClick( DialogInterface dialog, int whichButton ) {
-                        Log.d( "XXXX", "yeash" );
                         // reply to requester:
                         mShaveService.sendMessage( address, Definitions.REPLY_ACCEPTED );
 

@@ -4,22 +4,31 @@ import java.util.HashMap;
 
 import com.tejus.shavedog.Definitions;
 import com.tejus.shavedog.R;
+import com.tejus.shavedog.ShaveService;
 import com.tejus.shavedog.resources.ShaveDbAdapter;
 
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.util.Log;
+import android.view.View;
+import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
+import android.widget.Toast;
 
 public class FriendsActivity extends ListActivity {
     private BroadcastReceiver mLocalIntentReceiver = new LocalIntentReceiver();
     ShaveDbAdapter dbAdapter;
     Cursor mCursor;
+    private ServiceConnection mConnection;
+    private ShaveService mShaveService;
     
 
     @Override
@@ -34,8 +43,36 @@ public class FriendsActivity extends ListActivity {
         Log.d("XXXX", "oncreate received : " + userName + " from : " + address + "; inserting into db..");
         dbAdapter.insertFriend(userName, address, "active" );
         showFriends();
+        connectToService();
     }
 
+    private void connectToService() {
+        mConnection = new ServiceConnection() {
+            @Override
+            public void onServiceDisconnected( ComponentName className ) {
+                mShaveService = null;
+            }
+
+            @Override
+            public void onServiceConnected( ComponentName name, IBinder service ) {
+                mShaveService = ( ( ShaveService.ShaveBinder ) service ).getService();
+            }
+        };        
+        bindService( new Intent( this, ShaveService.class ), mConnection, Context.BIND_AUTO_CREATE );
+
+    }
+
+    @Override
+    protected void onListItemClick(ListView l, View v, int position, long id) {
+        super.onListItemClick(l, v, position, id);
+        // Get the item that was clicked
+       Log.d("XXXX", "position = " + position + ", id = "+ id);
+       String address = dbAdapter.fetchFriend( id ).getString( dbAdapter.COLUMN_ADDRESS );
+       Log.d("XXXX", "address selected = " + address);
+       //message this guy for a listing of files:
+       mShaveService.sendMessage( address, Definitions.REQUEST_LISTING );
+    }
+    
     private void showFriends() {
         
             mCursor = dbAdapter.fetchAllFriends();
@@ -60,6 +97,11 @@ public class FriendsActivity extends ListActivity {
     protected void onSaveInstanceState( Bundle outState ) {
         super.onSaveInstanceState( outState );
     }
+    
+    @Override
+    public void onBackPressed() {
+        startActivity( new Intent().setClass( this, ShaveDogActivity.class ));
+    };
 
     public class LocalIntentReceiver extends BroadcastReceiver {
         @Override
