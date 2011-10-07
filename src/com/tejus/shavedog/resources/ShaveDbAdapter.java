@@ -22,12 +22,11 @@ public class ShaveDbAdapter {
         KEY_ADDRESS,
         KEY_STATUS
     };
-    
-   public static int COLUMN_ROWID = 0;
-   public static int COLUMN_USERNAME = 1;
-   public static int COLUMN_ADDRESS = 2;
-   public static int COLUMN_STATUS = 3;
-    
+
+    public static int COLUMN_ROWID = 0;
+    public static int COLUMN_USERNAME = 1;
+    public static int COLUMN_ADDRESS = 2;
+    public static int COLUMN_STATUS = 3;
 
     private Context context;
     private SQLiteDatabase database;
@@ -49,16 +48,31 @@ public class ShaveDbAdapter {
 
     public long insertFriend( String userName, String address, String status ) {
         ContentValues initialValues = createContentValues( userName, address, status );
-        Log.d("XXXX", "gonna start dumping cursor: ");
-        DatabaseUtils.dumpCursor( database.query( DATABASE_TABLE, new String[] {KEY_USERNAME}, null, null, null, null, null  ) );
+        Log.d( "XXXX", "gonna start dumping cursor: " );
+        DatabaseUtils.dumpCursor( database.query( DATABASE_TABLE, new String[] {
+            KEY_USERNAME
+        }, null, null, null, null, null ) );
+        Cursor cursor = database.query( DATABASE_TABLE, new String[] {
+            KEY_ROWID,
+            KEY_ADDRESS
 
-        if (database.query( DATABASE_TABLE, new String[] {KEY_USERNAME}, KEY_USERNAME + " = '" + userName + "'", null, null, null, null  ).getCount() == 0) {
-            Log.d("XXXX: ", "inserting new friend: " + userName);
-            return database.insert( DATABASE_TABLE, null, initialValues );
+        }, KEY_USERNAME + " = '" + userName + "'", null, null, null, null );
+        if ( cursor.getCount() > 0 ) {
+            cursor.moveToFirst();
+            if ( !( cursor.getString( 1 ).equals( address ) ) ) {// this's the
+                                                                 // address
+                Log.d( "XXXX", "updating friends' old address with: " + address );
+                updateFriend( cursor.getInt( 0 ), userName, address, "active" );
+                return 1;
+               
+            } else {
+                Log.d( "XXXX: ", "friend already exists: " + userName );
+                return 0;
+            }
         } else {
-            Log.d("XXXX: ", "friend already exists: " + userName);
+            Log.d( "XXXX: ", "inserting new friend: " + userName );
+            return database.insert( DATABASE_TABLE, null, initialValues );
         }
-        return 0;
     }
 
     public boolean updateFriend( long rowId, String userName, String address, String status ) {

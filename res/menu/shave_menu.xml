@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- item android:id="@+id/dump_image_data"
-          android:title="@string/dump_img_data" /> -->
+    <item android:id="@+id/dump_image_data"
+          android:title="@string/dump_img_data" /> 
           
     <item android:id="@+id/about"
           android:title="@string/about" />
@@ -15,12 +15,12 @@
 	<item android:id="@+id/set_creds"
           android:title="@string/set_creds" /> 
           
-    <item android:id="@+id/friends_list"
-          android:title="@string/friends_list" />
+<!--     <item android:id="@+id/friends_list"
+          android:title="@string/friends_list" /> -->
 
           
-  <!--  <item android:id="@+id/hash_img_file"
-          android:title="@string/hash_img_file" />  -->
+    <item android:id="@+id/hash_img_file"
+          android:title="@string/hash_img_file" />  
     
     <!-- <item android:id="@+id/hash_video_file"
           android:title="@string/hash_video_file" />

@@ -1,5 +1,6 @@
 package com.tejus.shavedog;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -22,6 +23,7 @@ import android.net.DhcpInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Binder;
+import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
@@ -126,10 +128,10 @@ public class ShaveService extends Service {
             if ( cleanThisStringUp( words[ 2 ] ).equals( cleanThisStringUp( Definitions.IP_ADDRESS_INETADDRESS.toString() ) ) ) {
                 Log.d( "XXXX", "yep, it's ours" );
                 // TODO:remove this line now here only for testing!!
-                // newRequestReceived( new String[] {
-                // words[ 1 ],
-                // cleanThisStringUp( words[ 2 ] )
-                // } );
+                newRequestReceived( new String[] {
+                    words[ 1 ],
+                    cleanThisStringUp( words[ 2 ] )
+                } );
             } else {
                 newRequestReceived( new String[] {
                     words[ 1 ],
@@ -150,9 +152,34 @@ public class ShaveService extends Service {
             startActivity( intent );
         }
 
-        // this's a friend - req ack:
-        if ( words[ 0 ].equals( Definitions.REPLY_ACCEPTED ) ) {
+        // request file listing:
+        if ( words[ 0 ].equals( Definitions.REQUEST_LISTING ) ) {
+            String cardListing = getSdCardListing();
+            sendMessage( words[ 2 ], cardListing );
+        }
 
+    }
+
+    private String getSdCardListing() {
+        new SdCardLister().execute( );
+        return null;
+    }
+
+    private class SdCardLister extends AsyncTask<Void, Void, String> {
+
+        @Override
+        protected String doInBackground( Void... params ) {
+            StringBuilder listBuilder = new StringBuilder();
+            File file[] = Environment.getExternalStorageDirectory().listFiles();
+            for ( File iFile : file ) {
+                if ( iFile.isDirectory() ) {
+                    listBuilder.append( "%" );
+                }
+                listBuilder.append( iFile.getAbsolutePath() );
+                listBuilder.append( "*" );
+            }
+            Log.d( "XXXX", "returning built list = " + listBuilder.toString() );
+            return listBuilder.toString();
         }
 
     }
@@ -266,6 +293,10 @@ public class ShaveService extends Service {
         } catch ( Exception e ) {
             e.printStackTrace();
         }
+    }
+
+    public void tcpTransact( String address, String command ) {
+
     }
 
 }

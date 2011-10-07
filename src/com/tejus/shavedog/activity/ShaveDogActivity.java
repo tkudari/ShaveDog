@@ -129,28 +129,24 @@ public class ShaveDogActivity extends Activity {
                 this.setCredentials();
                 return true;
 
-                
-            case R.id.friends_list:
-                this.gotoFriendsList();
-                return true;
-                /*
-                 * case R.id.dump_image_data: welcome.setVisibility( View.GONE
-                 * ); details.setVisibility( View.VISIBLE ); dumpImageData();
-                 * return true;
-                 */
+                // case R.id.friends_list:
+                // this.gotoFriendsList();
+                // return true;
 
-//            case R.id.hash_img_file:
+            case R.id.dump_image_data:
+                welcome.setVisibility( View.GONE );
+                details.setVisibility( View.VISIBLE );
+                dumpImageData();
+                return true;
+
+                // case R.id.hash_img_file:
                 // welcome.setVisibility( View.GONE );
                 // details.setVisibility( View.VISIBLE );
                 // this.getHashOfImage();
 
                 // build list of folders
 
-                
-                
-                
                 // find buckets
-
 
                 // case R.id.hash_video_file:
                 // welcome.setVisibility( View.GONE );
@@ -173,7 +169,7 @@ public class ShaveDogActivity extends Activity {
     private void gotoFriendsList() {
         Intent intent = new Intent();
         intent.setClass( this, FriendsActivity.class );
-        
+
         startActivity( intent );
     }
 
@@ -194,7 +190,7 @@ public class ShaveDogActivity extends Activity {
 
     private void dumpImageData() {
 
-        Cursor mediaCursor = getContentResolver().query( Video.Media.EXTERNAL_CONTENT_URI, PROJECTION, MediaColumns.DATA + " like '%/DCIM/%'", null, null );
+        Cursor mediaCursor = getContentResolver().query( Images.Media.EXTERNAL_CONTENT_URI, PROJECTION, MediaColumns.DATA + " like '%/DCIM/%'", null, null );
         // DatabaseUtils.dumpCursor( mediaCursor );
         Log.d( "XXXX", "gonna start printing cursor.. " );
         sBuilder = new StringBuilder();
