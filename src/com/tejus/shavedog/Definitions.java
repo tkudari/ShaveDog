@@ -24,6 +24,7 @@ public class Definitions {
     public static int COMMAND_WORD_LENGTH = 4;
     public static String REPLY_ACCEPTED = "yes";
     public static String REQUEST_LISTING = "show_files";
+    public static String LISTING_REPLY = "listing_reply";
     
     
     //Intent Names:

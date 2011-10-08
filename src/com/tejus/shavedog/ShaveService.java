@@ -8,6 +8,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.StringTokenizer;
+import java.util.concurrent.ExecutionException;
 
 import com.tejus.shavedog.activity.FriendsActivity;
 import com.tejus.shavedog.activity.ShaveDogActivity;
@@ -111,6 +112,7 @@ public class ShaveService extends Service {
     private void dealWithReceivedPacket( DatagramPacket packet ) {
         String words[] = new String[ Definitions.COMMAND_WORD_LENGTH ];
         int wordCounter = 0;
+        String senderAddress;
         String command = new String( packet.getData() );
 
         StringTokenizer strTok = new StringTokenizer( command, Definitions.COMMAND_DELIM );
@@ -120,6 +122,8 @@ public class ShaveService extends Service {
         }
         for ( String word : words )
             Log.d( "XXXX", "word = " + word );
+
+        senderAddress = words[ 2 ];
 
         // this's a broadcast:
         if ( words[ 0 ].equals( Definitions.QUERY_LIST ) ) {
@@ -138,7 +142,9 @@ public class ShaveService extends Service {
                     cleanThisStringUp( words[ 2 ] )
                 } );
             }
-        } else if ( words[ 0 ].equals( Definitions.REPLY_ACCEPTED ) ) {
+        }
+
+        if ( words[ 0 ].equals( Definitions.REPLY_ACCEPTED ) ) {
             String userName = words[ 1 ];
             String address = cleanThisStringUp( words[ 2 ] );
             Log.d( "XXXX", "dealing with pkt: " + userName + ", " + address );
@@ -155,14 +161,20 @@ public class ShaveService extends Service {
         // request file listing:
         if ( words[ 0 ].equals( Definitions.REQUEST_LISTING ) ) {
             String cardListing = getSdCardListing();
-            sendMessage( words[ 2 ], cardListing );
+            Log.d( "XXXX", "cardListing received = " + cardListing );
+            sendMessage( senderAddress, Definitions.LISTING_REPLY + ":" + cardListing );
         }
 
     }
 
     private String getSdCardListing() {
-        new SdCardLister().execute( );
-        return null;
+        try {
+            return new SdCardLister().execute().get();
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            return null;
+        }
+
     }
 
     private class SdCardLister extends AsyncTask<Void, Void, String> {
@@ -268,6 +280,11 @@ public class ShaveService extends Service {
 
     void initNetworkStuff() {
         wifi = ( WifiManager ) this.getSystemService( Context.WIFI_SERVICE );
+        if ( !wifi.isWifiEnabled() ) {
+            Toast.makeText( this, R.string.no_wifi, Toast.LENGTH_LONG ).show();
+        } else {
+            Log.d( "XXXX", "wifi exists?" );
+        }
         dhcp = wifi.getDhcpInfo();
         getOurIp();
     }

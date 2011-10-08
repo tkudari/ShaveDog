@@ -70,8 +70,8 @@ public class FriendsActivity extends ListActivity {
        String address = dbAdapter.fetchFriend( id ).getString( dbAdapter.COLUMN_ADDRESS );
        Log.d("XXXX", "address selected = " + address);
        //message this guy for a listing of files:
-       //check / create a tcp conn. with the guy
-       mShaveService.tcpTransact(address, Definitions.REQUEST_LISTING);
+       mShaveService.sendMessage( address, Definitions.REQUEST_LISTING );
+       
     }
     
     private void showFriends() {

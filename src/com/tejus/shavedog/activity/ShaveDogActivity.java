@@ -592,7 +592,7 @@ public class ShaveDogActivity extends Activity {
             @Override
             public void onServiceConnected( ComponentName name, IBinder service ) {
                 mShaveService = ( ( ShaveService.ShaveBinder ) service ).getService();
-                Toast.makeText( mContext, R.string.shave_service_connected, Toast.LENGTH_SHORT ).show();
+                //Toast.makeText( mContext, R.string.shave_service_connected, Toast.LENGTH_SHORT ).show();
             }
         };
 
