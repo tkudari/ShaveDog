@@ -9,7 +9,7 @@ public class Definitions {
     public static int GENERIC_SERVER_PORT = 5565;
     
     
-    public static final int COMMAND_BUFSIZE = 40;
+    public static final int COMMAND_BUFSIZE = 4000;
     public static String QUERY_LIST = "query_list";
     public static final String TAG = "XXXX";
     public static final boolean DASHWIRE = true;

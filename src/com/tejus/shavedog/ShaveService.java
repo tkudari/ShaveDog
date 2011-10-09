@@ -7,6 +7,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.util.concurrent.ExecutionException;
 
@@ -93,9 +94,10 @@ public class ShaveService extends Service {
         @Override
         protected Void doInBackground( DatagramSocket... requestSocket ) {
             byte[] buffer = new byte[ Definitions.COMMAND_BUFSIZE ];
-            DatagramPacket packet = new DatagramPacket( buffer, buffer.length );
+            DatagramPacket packet;
             while ( true ) {
                 try {
+                    packet = new DatagramPacket( buffer, buffer.length );
                     Log.d( "XXXX", "server listening on : " + requestSocket[ 0 ].getLocalPort() );
                     requestSocket[ 0 ].receive( packet );
                     Log.d( "XXXX", "Stuff received by Server = " + new String( packet.getData() ) );
@@ -110,14 +112,16 @@ public class ShaveService extends Service {
     }
 
     private void dealWithReceivedPacket( DatagramPacket packet ) {
-        String words[] = new String[ Definitions.COMMAND_WORD_LENGTH ];
+        String words[] = new String[ Definitions.COMMAND_WORD_LENGTH + 1 ];
         int wordCounter = 0;
         String senderAddress;
         String command = new String( packet.getData() );
+        Log.d( "XXXX", "command here = " + command );
 
         StringTokenizer strTok = new StringTokenizer( command, Definitions.COMMAND_DELIM );
         while ( strTok.hasMoreTokens() ) {
             words[ wordCounter ] = strTok.nextToken();
+            Log.d("XXXX", "word here = " + words[wordCounter]);
             ++wordCounter;
         }
         for ( String word : words )
@@ -132,10 +136,10 @@ public class ShaveService extends Service {
             if ( cleanThisStringUp( words[ 2 ] ).equals( cleanThisStringUp( Definitions.IP_ADDRESS_INETADDRESS.toString() ) ) ) {
                 Log.d( "XXXX", "yep, it's ours" );
                 // TODO:remove this line now here only for testing!!
-                newRequestReceived( new String[] {
-                    words[ 1 ],
-                    cleanThisStringUp( words[ 2 ] )
-                } );
+                // newRequestReceived( new String[] {
+                // words[ 1 ],
+                // cleanThisStringUp( words[ 2 ] )
+                // } );
             } else {
                 newRequestReceived( new String[] {
                     words[ 1 ],
@@ -160,14 +164,18 @@ public class ShaveService extends Service {
 
         // request file listing:
         if ( words[ 0 ].equals( Definitions.REQUEST_LISTING ) ) {
-            String cardListing = getSdCardListing();
-            Log.d( "XXXX", "cardListing received = " + cardListing );
+            ArrayList<String> cardListing = getSdCardListing();
+            Log.d( "XXXX", "cardListing received = " + cardListing.toString() );
             sendMessage( senderAddress, Definitions.LISTING_REPLY + ":" + cardListing );
+        }
+        
+        if(words[0].equals( Definitions.LISTING_REPLY )) {
+            Log.d("XXXX", "eg");
         }
 
     }
 
-    private String getSdCardListing() {
+    private ArrayList<String> getSdCardListing() {
         try {
             return new SdCardLister().execute().get();
         } catch ( Exception e ) {
@@ -177,21 +185,17 @@ public class ShaveService extends Service {
 
     }
 
-    private class SdCardLister extends AsyncTask<Void, Void, String> {
+    private class SdCardLister extends AsyncTask<Void, Void, ArrayList<String>> {
 
         @Override
-        protected String doInBackground( Void... params ) {
-            StringBuilder listBuilder = new StringBuilder();
+        protected ArrayList<String> doInBackground( Void... params ) {
+            ArrayList<String> list = new ArrayList<String>();
             File file[] = Environment.getExternalStorageDirectory().listFiles();
             for ( File iFile : file ) {
-                if ( iFile.isDirectory() ) {
-                    listBuilder.append( "%" );
-                }
-                listBuilder.append( iFile.getAbsolutePath() );
-                listBuilder.append( "*" );
+                list.add( iFile.getName() );
             }
-            Log.d( "XXXX", "returning built list = " + listBuilder.toString() );
-            return listBuilder.toString();
+            return list;
+
         }
 
     }
@@ -301,6 +305,10 @@ public class ShaveService extends Service {
 
     public void sendMessage( String address, String message ) {
         String sendMessage = message + ":" + getOurUserName() + ":" + getOurIp().toString().replace( "/", "" ) + Definitions.END_DELIM;
+        byte[] testArr = sendMessage.getBytes();
+        
+        Log.d( "XXXX", "sendMessage = " + sendMessage + ", len = " + sendMessage.length() );
+        Log.d( "XXXX", "testarr = " + testArr.toString() + ", len = " + testArr.length );
         try {
             Log.d( "XXXX", "destination address = " + InetAddress.getByName( address ) );
             DatagramPacket sendPacket = new DatagramPacket( sendMessage.getBytes(), sendMessage.getBytes().length, InetAddress.getByName( address ),

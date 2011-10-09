@@ -68,6 +68,7 @@ public class FriendsActivity extends ListActivity {
         // Get the item that was clicked
        Log.d("XXXX", "position = " + position + ", id = "+ id);
        String address = dbAdapter.fetchFriend( id ).getString( dbAdapter.COLUMN_ADDRESS );
+       dbAdapter.closeCursor();
        Log.d("XXXX", "address selected = " + address);
        //message this guy for a listing of files:
        mShaveService.sendMessage( address, Definitions.REQUEST_LISTING );
@@ -85,6 +86,7 @@ public class FriendsActivity extends ListActivity {
             SimpleCursorAdapter friends = new SimpleCursorAdapter(this,
                     R.layout.friend_row, mCursor, from, to);
             setListAdapter(friends);
+            dbAdapter.closeCursor();
         
     }
 
@@ -110,6 +112,7 @@ public class FriendsActivity extends ListActivity {
             
             Log.d( "XXXX", "friend accepted, inserting into db; username = " + intent.getStringExtra( "user_name" ) + ", address = " + intent.getStringExtra( "address" ) );
             dbAdapter.insertFriend( intent.getStringExtra( "user_name" ), intent.getStringExtra( "address" ), "active" );
+            dbAdapter.closeCursor();
         }
     }
 }

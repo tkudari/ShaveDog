@@ -31,6 +31,7 @@ public class ShaveDbAdapter {
     private Context context;
     private SQLiteDatabase database;
     private ShaveDbHelper dbHelper;
+    Cursor mCursor;
 
     public ShaveDbAdapter( Context context ) {
         this.context = context;
@@ -49,20 +50,20 @@ public class ShaveDbAdapter {
     public long insertFriend( String userName, String address, String status ) {
         ContentValues initialValues = createContentValues( userName, address, status );
         Log.d( "XXXX", "gonna start dumping cursor: " );
-        DatabaseUtils.dumpCursor( database.query( DATABASE_TABLE, new String[] {
-            KEY_USERNAME
-        }, null, null, null, null, null ) );
-        Cursor cursor = database.query( DATABASE_TABLE, new String[] {
+//        DatabaseUtils.dumpCursor( database.query( DATABASE_TABLE, new String[] {
+//            KEY_USERNAME
+//        }, null, null, null, null, null ) );
+         mCursor = database.query( DATABASE_TABLE, new String[] {
             KEY_ROWID,
             KEY_ADDRESS
 
         }, KEY_USERNAME + " = '" + userName + "'", null, null, null, null );
-        if ( cursor.getCount() > 0 ) {
-            cursor.moveToFirst();
-            if ( !( cursor.getString( 1 ).equals( address ) ) ) {// this's the
+        if ( mCursor.getCount() > 0 ) {
+            mCursor.moveToFirst();
+            if ( !( mCursor.getString( 1 ).equals( address ) ) ) {// this's the
                                                                  // address
                 Log.d( "XXXX", "updating friends' old address with: " + address );
-                updateFriend( cursor.getInt( 0 ), userName, address, "active" );
+                updateFriend( mCursor.getInt( 0 ), userName, address, "active" );
                 return 1;
                
             } else {
@@ -90,7 +91,7 @@ public class ShaveDbAdapter {
     }
 
     public Cursor fetchFriend( long rowId ) throws SQLException {
-        Cursor mCursor = database.query( true, DATABASE_TABLE, PROJECTION, KEY_ROWID + "=" + rowId, null, null, null, null, null );
+        mCursor = database.query( true, DATABASE_TABLE, PROJECTION, KEY_ROWID + "=" + rowId, null, null, null, null, null );
         if ( mCursor != null ) {
             mCursor.moveToFirst();
         }
@@ -103,5 +104,9 @@ public class ShaveDbAdapter {
         values.put( KEY_ADDRESS, address );
         values.put( KEY_STATUS, status );
         return values;
+    }
+    
+    public void closeCursor() {
+        mCursor.close();
     }
 }
