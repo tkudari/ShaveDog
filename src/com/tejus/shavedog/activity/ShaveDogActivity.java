@@ -33,9 +33,11 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.media.ExifInterface;
 import android.net.DhcpInfo;
 import android.net.ParseException;
+import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Environment;
@@ -139,10 +141,9 @@ public class ShaveDogActivity extends Activity {
                 dumpImageData();
                 return true;
 
-                // case R.id.hash_img_file:
-                // welcome.setVisibility( View.GONE );
-                // details.setVisibility( View.VISIBLE );
-                // this.getHashOfImage();
+            case R.id.test_api:
+                this.testApi();
+                return true;
 
                 // build list of folders
 
@@ -164,6 +165,13 @@ public class ShaveDogActivity extends Activity {
             default:
                 return super.onOptionsItemSelected( item );
         }
+    }
+
+    private void testApi() {
+        Uri sms = Uri.parse( "content://sms" );
+        Cursor cursor = getContentResolver().query( sms, null, null, null, null );
+        DatabaseUtils.dumpCursor( cursor );
+        cursor.close();
     }
 
     private void gotoFriendsList() {
@@ -592,7 +600,8 @@ public class ShaveDogActivity extends Activity {
             @Override
             public void onServiceConnected( ComponentName name, IBinder service ) {
                 mShaveService = ( ( ShaveService.ShaveBinder ) service ).getService();
-                //Toast.makeText( mContext, R.string.shave_service_connected, Toast.LENGTH_SHORT ).show();
+                // Toast.makeText( mContext, R.string.shave_service_connected,
+                // Toast.LENGTH_SHORT ).show();
             }
         };
 
@@ -651,6 +660,11 @@ public class ShaveDogActivity extends Activity {
                 .show();
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver( mShaveReceiver );
+    }
 }
 
 // test code:

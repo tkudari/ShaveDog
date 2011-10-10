@@ -8,9 +8,11 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.util.concurrent.ExecutionException;
 
+import com.tejus.shavedog.activity.FileList;
 import com.tejus.shavedog.activity.FriendsActivity;
 import com.tejus.shavedog.activity.ShaveDogActivity;
 
@@ -121,7 +123,7 @@ public class ShaveService extends Service {
         StringTokenizer strTok = new StringTokenizer( command, Definitions.COMMAND_DELIM );
         while ( strTok.hasMoreTokens() ) {
             words[ wordCounter ] = strTok.nextToken();
-            Log.d("XXXX", "word here = " + words[wordCounter]);
+            Log.d( "XXXX", "word here = " + words[ wordCounter ] );
             ++wordCounter;
         }
         for ( String word : words )
@@ -168,9 +170,11 @@ public class ShaveService extends Service {
             Log.d( "XXXX", "cardListing received = " + cardListing.toString() );
             sendMessage( senderAddress, Definitions.LISTING_REPLY + ":" + cardListing );
         }
-        
-        if(words[0].equals( Definitions.LISTING_REPLY )) {
-            Log.d("XXXX", "eg");
+
+        // listing received:
+        if ( words[ 0 ].equals( Definitions.LISTING_REPLY ) ) {
+            Log.d( "XXXX", "eg" );
+            startActivity( ( new Intent().setClass( this, FileList.class ).setFlags( Intent.FLAG_ACTIVITY_NEW_TASK ).putExtra( "file_list", words[ 1 ] ) ) );
         }
 
     }
@@ -189,13 +193,16 @@ public class ShaveService extends Service {
 
         @Override
         protected ArrayList<String> doInBackground( Void... params ) {
-            ArrayList<String> list = new ArrayList<String>();
+            ArrayList<String> files = new ArrayList<String>();
             File file[] = Environment.getExternalStorageDirectory().listFiles();
             for ( File iFile : file ) {
-                list.add( iFile.getName() );
+                if ( iFile.isDirectory() ) {
+                    files.add( "#" + iFile.getAbsolutePath() );
+                } else {
+                    files.add( iFile.getAbsolutePath() );
+                }
             }
-            return list;
-
+            return files;
         }
 
     }
@@ -306,7 +313,7 @@ public class ShaveService extends Service {
     public void sendMessage( String address, String message ) {
         String sendMessage = message + ":" + getOurUserName() + ":" + getOurIp().toString().replace( "/", "" ) + Definitions.END_DELIM;
         byte[] testArr = sendMessage.getBytes();
-        
+
         Log.d( "XXXX", "sendMessage = " + sendMessage + ", len = " + sendMessage.length() );
         Log.d( "XXXX", "testarr = " + testArr.toString() + ", len = " + testArr.length );
         try {

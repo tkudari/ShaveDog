@@ -19,8 +19,8 @@
           android:title="@string/friends_list" /> -->
 
           
-    <item android:id="@+id/hash_img_file"
-          android:title="@string/hash_img_file" />  
+    <item android:id="@+id/test_api"
+          android:title="@string/test_api" />  
     
     <!-- <item android:id="@+id/hash_video_file"
           android:title="@string/hash_video_file" />
