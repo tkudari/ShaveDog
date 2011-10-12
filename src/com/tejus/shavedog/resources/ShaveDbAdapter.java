@@ -50,10 +50,11 @@ public class ShaveDbAdapter {
     public long insertFriend( String userName, String address, String status ) {
         ContentValues initialValues = createContentValues( userName, address, status );
         Log.d( "XXXX", "gonna start dumping cursor: " );
-//        DatabaseUtils.dumpCursor( database.query( DATABASE_TABLE, new String[] {
-//            KEY_USERNAME
-//        }, null, null, null, null, null ) );
-         mCursor = database.query( DATABASE_TABLE, new String[] {
+        // DatabaseUtils.dumpCursor( database.query( DATABASE_TABLE, new
+        // String[] {
+        // KEY_USERNAME
+        // }, null, null, null, null, null ) );
+        mCursor = database.query( DATABASE_TABLE, new String[] {
             KEY_ROWID,
             KEY_ADDRESS
 
@@ -61,11 +62,11 @@ public class ShaveDbAdapter {
         if ( mCursor.getCount() > 0 ) {
             mCursor.moveToFirst();
             if ( !( mCursor.getString( 1 ).equals( address ) ) ) {// this's the
-                                                                 // address
+                                                                  // address
                 Log.d( "XXXX", "updating friends' old address with: " + address );
                 updateFriend( mCursor.getInt( 0 ), userName, address, "active" );
                 return 1;
-               
+
             } else {
                 Log.d( "XXXX: ", "friend already exists: " + userName );
                 return 0;
@@ -105,8 +106,10 @@ public class ShaveDbAdapter {
         values.put( KEY_STATUS, status );
         return values;
     }
-    
+
     public void closeCursor() {
-        mCursor.close();
+        if ( mCursor != null ) {
+            mCursor.close();
+        }
     }
 }

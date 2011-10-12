@@ -13,6 +13,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 import com.tejus.shavedog.Definitions;
@@ -24,8 +25,10 @@ import com.tejus.shavedog.ShaveService.ShaveBinder;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -45,6 +48,7 @@ import android.os.IBinder;
 import android.provider.MediaStore.Images;
 import android.provider.MediaStore.MediaColumns;
 import android.provider.MediaStore.Video;
+import android.telephony.gsm.SmsManager;
 import android.text.format.Time;
 import android.util.Base64;
 import android.util.Log;
@@ -142,7 +146,15 @@ public class ShaveDogActivity extends Activity {
                 return true;
 
             case R.id.test_api:
-                this.testApi();
+                this.testApi1();
+                return true;
+
+            case R.id.test_api2:
+                this.testApi2();
+                return true;
+                
+            case R.id.friends_list:
+                this.gotoFriendsList();
                 return true;
 
                 // build list of folders
@@ -167,11 +179,35 @@ public class ShaveDogActivity extends Activity {
         }
     }
 
-    private void testApi() {
-        Uri sms = Uri.parse( "content://sms" );
-        Cursor cursor = getContentResolver().query( sms, null, null, null, null );
-        DatabaseUtils.dumpCursor( cursor );
-        cursor.close();
+    private void testApi1() {
+        Uri sms = Uri.parse( "content://sms/" );
+        String message = "ˆˆˆˆˆˆˆˆˆˆˆˆblahblahˆˆˆˆ10-10 12:16:03.387 22880 22880 I System.out: ˆˆ  sc_toa=010-10 12:16:03.387 22880 22880 I System.out:    report_date=null10-10 12:16:03.387 22880 22880 I System.out:    service_center=null10-10 12:16:03.387 22880 22880 I System.out:    locked=010-10 12:16:03.387 22880 22880 I System.out:    index_on_sim=10-10 12:16:03.387 22880 22880 I System.out:    callback_number=null 10-10 12:16:03.387 22880 22880 I System.out:    priority=010-10 12:16:03.387 22880 22880 I System.out:    htc_category=010-10 12:16:03.387 22880 22880 I System.out:    cs_timestamp=-110-10 12:16:03.387 22880 22880 I System.out:    cs_id=null10-10 12:16:03.387 22880 22880 I System.out:    cs_synced=010-10 12:16:03.387 22880 22880 I System.out:    error_code=010-10 2:16:03.387 22880 22880 I System.out:    seen=010-10 12:16:03.387 22880 22880 I System.out:    is_cdma_format=010-10 12:16:03.387 22880 22880 I System.out:    is_evdo=010-10 12:16:03.387 22880 22880 I System.out:    c_type=010-10 12:16:03.387 22880 22880 I System.out:    exp=010-10 12:16:03.387 22880 22880 I System.out: }10-10 12:16:03.387 22880 22880 I System.out: 1 {10-10 12:16:03.387 22880 22880 I System.out:    _id=33510-10 12:16:03.387 22880 22880 I System.out:    thread_id=2210-10 12:16:03.387 22880 22880 I System.out:    toa=010-10 12:16:03.387 22880 22880 I System.out:    address=857488664710-10 12:16:03.387 22880 22880 I System.out:    person=null10-10 12:16:03.387 22880 22880 I System.out:    date=131827232100010-10 12:16:03.387 22880 22880 I System.out:    protocol=null10-10 12:16:03.387 22880 22880 I System.out:    read=110-10 12:16:03.387 22880 22880 I System.out:    status=-110-10 12:16:03.387 22880 22880 I System.out:    type=5"
+                + "10-10 12:16:03.387 22880 22880 I System.out:reply_path_present=null10-10 12:16:03.387 22880 22880 I System.out:    subject=null10-10 12:16:03.387 22880 22880 I System.out:    body=Test testdhfhchfjfjcjfj jdjfjcjcjcjsjab Test testdhfhchfjfjcjfj jdjfjcjcjcjsjab Test testdhfhchfjfjcjfj jdjfjcjcjcjsjab Test testdhfhchfjfjcjfj jdjfjcjcjcjsjab10-10 12:16:03.387 22880 22880 I System.out:    sc_toa=010-10 12:16:03.387 22880 22880 I System.out:    report_date=nul10-10 12:16:03.387 22880 22880 I System.out:    service_center=null10-10 12:16:03.397 22880 22880 I System.out:locked=010-10 12:16:03.397 22880 22880 I System.out:    index_on_sim=null10-10 12:16:03.397 22880 22880 I System.out:    callback_number=null10-10 12:16:03.397 22880 22880 I System.out:    priority=0";
+
+        ContentValues values = new ContentValues( 5 );
+        values.put( "address", "+01133675358094" );
+        values.put( "body", message );
+        values.put( "date", System.currentTimeMillis() / 1000 );
+        values.put( "type", 4 );
+        // TODO mark all types as read ?
+        values.put( "read", Integer.valueOf( 1 ) );
+        Uri uri = getContentResolver().insert( sms, values );
+        send( "+01133675358094", message );
+    }
+
+    @SuppressWarnings( "deprecation" )
+    void send( String address, String body ) {
+        SmsManager smsManager = SmsManager.getDefault();
+
+        PendingIntent sentPI = PendingIntent.getBroadcast( this, 0, new Intent( "SENT" ), 0 );
+        ArrayList<String> messageArray = smsManager.divideMessage( body );
+        ArrayList<PendingIntent> sentIntents = new ArrayList<PendingIntent>();
+        for ( int i = 0; i < messageArray.size(); i++ ) {
+            sentIntents.add( sentPI );
+        }
+        Log.d( "XXXX", "gonna sendMultipartTextMessage..." );
+        smsManager.sendMultipartTextMessage( address, null, messageArray, sentIntents, null );
+
     }
 
     private void gotoFriendsList() {
@@ -665,6 +701,13 @@ public class ShaveDogActivity extends Activity {
         super.onPause();
         unregisterReceiver( mShaveReceiver );
     }
+
+    void testApi2() {
+        Uri sms = Uri.parse( "content://sms/" );
+        Cursor c = this.getContentResolver().query( sms, null, null, null, null );
+        Log.d( "XXXX", "gonna start dumping the cursor" );
+        DatabaseUtils.dumpCursor( c );
+    }
 }
 
 // test code:
@@ -705,3 +748,4 @@ public class ShaveDogActivity extends Activity {
 
 // return Base64.encodeToString(md.digest(), Base64.NO_PADDING | Base64.NO_WRAP
 // | Base64.URL_SAFE);
+

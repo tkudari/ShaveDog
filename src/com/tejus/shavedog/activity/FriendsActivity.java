@@ -29,7 +29,6 @@ public class FriendsActivity extends ListActivity {
     Cursor mCursor;
     private ServiceConnection mConnection;
     private ShaveService mShaveService;
-    
 
     @Override
     public void onCreate( Bundle savedInstanceState ) {
@@ -38,10 +37,12 @@ public class FriendsActivity extends ListActivity {
         dbAdapter = new ShaveDbAdapter( this );
         dbAdapter.open();
         Bundle bundle = getIntent().getExtras();
-        String userName = bundle.get( "user_name" ).toString();
-        String address = bundle.get( "address" ).toString();
-        Log.d("XXXX", "oncreate received : " + userName + " from : " + address + "; inserting into db..");
-        dbAdapter.insertFriend(userName, address, "active" );
+        if ( bundle != null) {
+            String userName = bundle.get( "user_name" ).toString();
+            String address = bundle.get( "address" ).toString();
+            Log.d( "XXXX", "oncreate received : " + userName + " from : " + address + "; inserting into db.." );
+            dbAdapter.insertFriend( userName, address, "active" );
+        }
         showFriends();
         connectToService();
     }
@@ -57,37 +58,40 @@ public class FriendsActivity extends ListActivity {
             public void onServiceConnected( ComponentName name, IBinder service ) {
                 mShaveService = ( ( ShaveService.ShaveBinder ) service ).getService();
             }
-        };        
+        };
         bindService( new Intent( this, ShaveService.class ), mConnection, Context.BIND_AUTO_CREATE );
 
     }
 
     @Override
-    protected void onListItemClick(ListView l, View v, int position, long id) {
-        super.onListItemClick(l, v, position, id);
+    protected void onListItemClick( ListView l, View v, int position, long id ) {
+        super.onListItemClick( l, v, position, id );
         // Get the item that was clicked
-       Log.d("XXXX", "position = " + position + ", id = "+ id);
-       String address = dbAdapter.fetchFriend( id ).getString( dbAdapter.COLUMN_ADDRESS );
-       dbAdapter.closeCursor();
-       Log.d("XXXX", "address selected = " + address);
-       //message this guy for a listing of files:
-       mShaveService.sendMessage( address, Definitions.REQUEST_LISTING );
-       
+        Log.d( "XXXX", "position = " + position + ", id = " + id );
+        String address = dbAdapter.fetchFriend( id ).getString( dbAdapter.COLUMN_ADDRESS );
+        dbAdapter.closeCursor();
+        Log.d( "XXXX", "address selected = " + address );
+        // message this guy for a listing of files:
+        mShaveService.sendMessage( address, Definitions.REQUEST_LISTING );
+
     }
-    
+
     private void showFriends() {
-        
-            mCursor = dbAdapter.fetchAllFriends();
-            startManagingCursor(mCursor);
 
-            String[] from = new String[] { ShaveDbAdapter.KEY_USERNAME };
-            int[] to = new int[] { R.id.label };
+        mCursor = dbAdapter.fetchAllFriends();
+        startManagingCursor( mCursor );
 
-            SimpleCursorAdapter friends = new SimpleCursorAdapter(this,
-                    R.layout.friend_row, mCursor, from, to);
-            setListAdapter(friends);
-            dbAdapter.closeCursor();
-        
+        String[] from = new String[] {
+            ShaveDbAdapter.KEY_USERNAME
+        };
+        int[] to = new int[] {
+            R.id.label
+        };
+
+        SimpleCursorAdapter friends = new SimpleCursorAdapter( this, R.layout.friend_row, mCursor, from, to );
+        setListAdapter( friends );
+        dbAdapter.closeCursor();
+
     }
 
     private void initReceiver() {
@@ -100,17 +104,19 @@ public class FriendsActivity extends ListActivity {
     protected void onSaveInstanceState( Bundle outState ) {
         super.onSaveInstanceState( outState );
     }
-    
+
     @Override
     public void onBackPressed() {
-        startActivity( new Intent().setClass( this, ShaveDogActivity.class ));
+        startActivity( new Intent().setClass( this, ShaveDogActivity.class ) );
     };
 
     public class LocalIntentReceiver extends BroadcastReceiver {
         @Override
         public void onReceive( Context context, Intent intent ) {
-            
-            Log.d( "XXXX", "friend accepted, inserting into db; username = " + intent.getStringExtra( "user_name" ) + ", address = " + intent.getStringExtra( "address" ) );
+
+            Log.d( "XXXX",
+                    "friend accepted, inserting into db; username = " + intent.getStringExtra( "user_name" ) + ", address = "
+                            + intent.getStringExtra( "address" ) );
             dbAdapter.insertFriend( intent.getStringExtra( "user_name" ), intent.getStringExtra( "address" ), "active" );
             dbAdapter.closeCursor();
         }

@@ -6,20 +6,28 @@ import java.util.StringTokenizer;
 import com.tejus.shavedog.R;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 
 public class FileList extends Activity {
 
+    Context mContext;
     ArrayList<String> mFiles = new ArrayList<String>();
     ListView lv;
+    Button backButton;
+    
     
     @Override
     public void onCreate( Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
         setContentView( R.layout.file_list );
+        mContext = this;
 
         Bundle bundle = getIntent().getExtras();
         String files = ( String ) bundle.get( "file_list" );
@@ -28,6 +36,16 @@ public class FileList extends Activity {
 
         lv = ( ListView ) findViewById( R.id.files_listview );        
         lv.setAdapter( new ArrayAdapter<String>( this, android.R.layout.simple_list_item_1, mFiles ) );
+        backButton = ( Button ) findViewById( R.id.back );
+        backButton.setOnClickListener( new View.OnClickListener() {            
+            @Override
+            public void onClick( View v ) {
+                Intent intent = new Intent();
+                intent.setClass( mContext, ShaveDogActivity.class );
+                startActivity( intent );
+            }
+        });
+        
 
     }
 
@@ -45,6 +63,8 @@ public class FileList extends Activity {
         }
 
     }
+    
+    
 
     // a beauty, aint' it?:
     // private void retrieveFileMap( String files ) {

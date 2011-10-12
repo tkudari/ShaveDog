@@ -1,10 +1,15 @@
 package com.tejus.shavedog;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -121,7 +126,7 @@ public class ShaveService extends Service {
         Log.d( "XXXX", "command here = " + command );
 
         StringTokenizer strTok = new StringTokenizer( command, Definitions.COMMAND_DELIM );
-        while ( strTok.hasMoreTokens() ) {
+        while ( strTok.hasMoreTokens() && wordCounter <= Definitions.COMMAND_WORD_LENGTH ) {
             words[ wordCounter ] = strTok.nextToken();
             Log.d( "XXXX", "word here = " + words[ wordCounter ] );
             ++wordCounter;
@@ -327,8 +332,56 @@ public class ShaveService extends Service {
         }
     }
 
-    public void tcpTransact( String address, String command ) {
+    // ///////////////////////////////////////////////
 
+    public void downloadFile( String fileName, long fileSize ) {
+        ServerSocket serverSocket;
+        Socket connection;
+
+        try {
+            serverSocket = new ServerSocket( Definitions.FILE_TRANSFER_PORT );
+            while ( true ) {
+                connection = serverSocket.accept();
+                InputStream iStream = connection.getInputStream();
+                FileOutputStream oStream = new FileOutputStream( new File( fileName ) );
+                byte[] readByte = new byte[ Definitions.DOWNLOAD_BUFFER_SIZE ];
+                int size;
+                while ( ( size = iStream.read( readByte ) ) > 0 ) {
+                    oStream.write( readByte, 0, size );
+                }
+                iStream.close();
+                oStream.close();
+            }
+        } catch ( IOException e ) {
+            e.printStackTrace();
+        }
+    }
+
+    public void uploadFile( String destinationAddress, String filePath, long fileSize ) {
+        Socket socket = null;
+        FileInputStream in = null;
+        FileOutputStream out = null;
+
+        try {
+            socket = new Socket( destinationAddress, Definitions.FILE_TRANSFER_PORT );
+            out = ( FileOutputStream ) socket.getOutputStream();
+            in = new FileInputStream( new File( filePath ) );
+        } catch ( Exception e ) {
+            e.printStackTrace();
+        }
+        try {
+            socket.sendUrgentData( 100 );
+            byte[] a = new byte[ Definitions.DOWNLOAD_BUFFER_SIZE ];
+            int size;
+            while ( ( size = in.read( a ) ) > 0 ) {
+                out.write( a, 0, size );
+            }
+            out.close();
+            in.close();
+            socket.close();
+        } catch ( Exception e ) {
+            e.printStackTrace();
+        }
     }
 
 }
