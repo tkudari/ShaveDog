@@ -27,7 +27,7 @@ public class Definitions {
     public static String REPLY_ACCEPTED = "yes";
     public static String REQUEST_LISTING = "show_files";
     public static String LISTING_REPLY = "listing_reply";
-    
+    public static String REQUEST_FILE = "request_file";    
     
     //Intent Names:
     public static String INTENT_QUERY_LIST= "com.tejus.shavedog.query_list";

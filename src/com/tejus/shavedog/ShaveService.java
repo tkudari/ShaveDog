@@ -179,7 +179,8 @@ public class ShaveService extends Service {
         // listing received:
         if ( words[ 0 ].equals( Definitions.LISTING_REPLY ) ) {
             Log.d( "XXXX", "eg" );
-            startActivity( ( new Intent().setClass( this, FileList.class ).setFlags( Intent.FLAG_ACTIVITY_NEW_TASK ).putExtra( "file_list", words[ 1 ] ) ) );
+            startActivity( ( new Intent().setClass( this, FileList.class ).setFlags( Intent.FLAG_ACTIVITY_NEW_TASK ).putExtra( "file_list", words[ 1 ] ).putExtra(
+                    "from_address", words[ 3 ] ) ) );
         }
 
     }
@@ -332,30 +333,78 @@ public class ShaveService extends Service {
         }
     }
 
+    public void downloadFile( String filePath, Context context ) {
+        new Downloader(context).execute(filePath);
+    }
+
+    void updateDownloadProgress( Context context, String filePath, int progress ) {
+        
+    }
+
     // ///////////////////////////////////////////////
 
-    public void downloadFile( String fileName, long fileSize ) {
-        ServerSocket serverSocket;
-        Socket connection;
+    private class Downloader extends AsyncTask<String, Integer, Boolean> {
+        String filePath;
+        Context context;
 
-        try {
-            serverSocket = new ServerSocket( Definitions.FILE_TRANSFER_PORT );
-            while ( true ) {
-                connection = serverSocket.accept();
-                InputStream iStream = connection.getInputStream();
-                FileOutputStream oStream = new FileOutputStream( new File( fileName ) );
-                byte[] readByte = new byte[ Definitions.DOWNLOAD_BUFFER_SIZE ];
-                int size;
-                while ( ( size = iStream.read( readByte ) ) > 0 ) {
-                    oStream.write( readByte, 0, size );
+        public Downloader(Context context){
+            this.context = context;
+        }
+        @Override
+        protected void onProgressUpdate( Integer... progress ) {
+            updateDownloadProgress( context, filePath, progress[ 0 ] );
+        }
+
+        @Override
+        protected Boolean doInBackground( String... path ) {
+            ServerSocket serverSocket;
+            Socket connection;
+            this.filePath = path[ 0 ];
+
+            try {
+                serverSocket = new ServerSocket( Definitions.FILE_TRANSFER_PORT );
+                while ( true ) {
+                    connection = serverSocket.accept();
+                    InputStream iStream = connection.getInputStream();
+                    FileOutputStream oStream = new FileOutputStream( new File( filePath ) );
+                    byte[] readByte = new byte[ Definitions.DOWNLOAD_BUFFER_SIZE ];
+                    int size;
+                    while ( ( size = iStream.read( readByte ) ) > 0 ) {
+                        oStream.write( readByte, 0, size );
+                    }
+                    iStream.close();
+                    oStream.close();
+                    return true;
                 }
-                iStream.close();
-                oStream.close();
+            } catch ( IOException e ) {
+                e.printStackTrace();
+                return false;
             }
-        } catch ( IOException e ) {
-            e.printStackTrace();
         }
     }
+
+    // public void downloadFile( String filePath, long fileSize ) {
+    // ServerSocket serverSocket;
+    // Socket connection;
+    //
+    // try {
+    // serverSocket = new ServerSocket( Definitions.FILE_TRANSFER_PORT );
+    // while ( true ) {
+    // connection = serverSocket.accept();
+    // InputStream iStream = connection.getInputStream();
+    // FileOutputStream oStream = new FileOutputStream( new File( filePath ) );
+    // byte[] readByte = new byte[ Definitions.DOWNLOAD_BUFFER_SIZE ];
+    // int size;
+    // while ( ( size = iStream.read( readByte ) ) > 0 ) {
+    // oStream.write( readByte, 0, size );
+    // }
+    // iStream.close();
+    // oStream.close();
+    // }
+    // } catch ( IOException e ) {
+    // e.printStackTrace();
+    // }
+    // }
 
     public void uploadFile( String destinationAddress, String filePath, long fileSize ) {
         Socket socket = null;
