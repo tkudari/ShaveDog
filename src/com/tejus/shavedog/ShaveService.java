@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -40,6 +41,8 @@ import android.widget.Toast;
 public class ShaveService extends Service {
     private DatagramSocket mBroadcastSocket, mGenericSocket;
     String mUserName;
+
+    private static final String DEFAULT_DOWNLOAD_LOC = Environment.getExternalStorageDirectory().toString();
 
     WifiManager wifi;
     DhcpInfo dhcp;
@@ -183,6 +186,15 @@ public class ShaveService extends Service {
                     "from_address", words[ 3 ] ) ) );
         }
 
+        if ( words[ 0 ].equals( Definitions.REQUEST_FILE ) ) {
+            handleDownloadRequest( words[ 1 ], words[ 2 ], words[ 4 ] );
+        }
+
+    }
+
+    private void handleDownloadRequest( String filePath, String fileLength, String destinationAddress ) {
+        Log.d( "XXXX", "dload req received for = " + filePath + ", length = " + fileLength );
+        uploadFile( destinationAddress, filePath, Long.parseLong( fileLength ), getApplicationContext() );
     }
 
     private ArrayList<String> getSdCardListing() {
@@ -205,7 +217,7 @@ public class ShaveService extends Service {
                 if ( iFile.isDirectory() ) {
                     files.add( "#" + iFile.getAbsolutePath() );
                 } else {
-                    files.add( iFile.getAbsolutePath() );
+                    files.add( iFile.getAbsolutePath() + "^" + iFile.length() );
                 }
             }
             return files;
@@ -333,45 +345,63 @@ public class ShaveService extends Service {
         }
     }
 
-    public void downloadFile( String filePath, Context context ) {
-        new Downloader(context).execute(filePath);
+    public void downloadFile( String filePath, long fileSize, Context context ) {
+        new Downloader( filePath, fileSize ).execute( context );
+    }
+
+    public void uploadFile( String destinationAddress, String filePath, long fileSize, Context context ) {
+        new Uploader( destinationAddress, filePath, fileSize ).execute( context );
     }
 
     void updateDownloadProgress( Context context, String filePath, int progress ) {
-        
+
     }
 
     // ///////////////////////////////////////////////
 
-    private class Downloader extends AsyncTask<String, Integer, Boolean> {
+    private class Downloader extends AsyncTask<Context, Integer, Boolean> {
         String filePath;
         Context context;
+        long fileSize;
 
-        public Downloader(Context context){
-            this.context = context;
+        public Downloader( String filePath, long fileSize ) {
+            this.filePath = filePath;
+            this.fileSize = fileSize;
         }
+
         @Override
         protected void onProgressUpdate( Integer... progress ) {
-            updateDownloadProgress( context, filePath, progress[ 0 ] );
+            // updateDownloadProgress( context, filePath, progress[ 0 ] );
         }
 
         @Override
-        protected Boolean doInBackground( String... path ) {
+        protected Boolean doInBackground( Context... context ) {
             ServerSocket serverSocket;
             Socket connection;
-            this.filePath = path[ 0 ];
+            this.context = context[ 0 ];
 
             try {
                 serverSocket = new ServerSocket( Definitions.FILE_TRANSFER_PORT );
                 while ( true ) {
+                    Log.d( "XXXX", "Downloader - gonna start waiting on accept()" );
                     connection = serverSocket.accept();
                     InputStream iStream = connection.getInputStream();
-                    FileOutputStream oStream = new FileOutputStream( new File( filePath ) );
+                    FileOutputStream oStream = new FileOutputStream( new File( DEFAULT_DOWNLOAD_LOC + "/" + getFileNameTrivial( filePath ) ) );
+                    Log.d( "XXXX", "Downloader - will start dloading to : " + DEFAULT_DOWNLOAD_LOC + "/" + getFileNameTrivial( filePath ) );
                     byte[] readByte = new byte[ Definitions.DOWNLOAD_BUFFER_SIZE ];
                     int size;
+                    long count = 0;
                     while ( ( size = iStream.read( readByte ) ) > 0 ) {
                         oStream.write( readByte, 0, size );
+                        ++count;
+                        if ( fileSize > Definitions.DOWNLOAD_BUFFER_SIZE ) {
+                            Log.d( "XXXX", "Downloader - download count = " + count + ", progress = "
+                                    + ( int ) ( ( count * Definitions.DOWNLOAD_BUFFER_SIZE * 100 ) / fileSize ) );
+                        } else {
+                            Log.d( "XXXX", "Downloader - download count = " + count + ", progress = 100" );
+                        }
                     }
+                    Log.d( "XXXX", "Downloader - done dloading : " + filePath );
                     iStream.close();
                     oStream.close();
                     return true;
@@ -406,31 +436,87 @@ public class ShaveService extends Service {
     // }
     // }
 
-    public void uploadFile( String destinationAddress, String filePath, long fileSize ) {
-        Socket socket = null;
-        FileInputStream in = null;
-        FileOutputStream out = null;
+    private class Uploader extends AsyncTask<Context, Integer, Boolean> {
+        String filePath, destinationAddress;
+        long fileSize;
 
-        try {
-            socket = new Socket( destinationAddress, Definitions.FILE_TRANSFER_PORT );
-            out = ( FileOutputStream ) socket.getOutputStream();
-            in = new FileInputStream( new File( filePath ) );
-        } catch ( Exception e ) {
-            e.printStackTrace();
+        public Uploader( String destinationAddress, String filePath, long fileSize ) {
+            this.filePath = filePath;
+            this.destinationAddress = destinationAddress;
+            this.fileSize = fileSize;
         }
-        try {
-            socket.sendUrgentData( 100 );
-            byte[] a = new byte[ Definitions.DOWNLOAD_BUFFER_SIZE ];
-            int size;
-            while ( ( size = in.read( a ) ) > 0 ) {
-                out.write( a, 0, size );
+
+        @Override
+        protected Boolean doInBackground( Context... params ) {
+            Socket socket = null;
+            FileInputStream iStream = null;
+            OutputStream oStream = null;
+
+            try {
+                socket = new Socket( destinationAddress, Definitions.FILE_TRANSFER_PORT );
+                oStream = ( OutputStream ) socket.getOutputStream();
+                iStream = new FileInputStream( new File( filePath ) );
+            } catch ( Exception e ) {
+                e.printStackTrace();
             }
-            out.close();
-            in.close();
-            socket.close();
-        } catch ( Exception e ) {
-            e.printStackTrace();
+            try {
+                socket.sendUrgentData( 100 );
+                byte[] readArray = new byte[ Definitions.DOWNLOAD_BUFFER_SIZE ];
+                int size;
+                long count = 0;
+                while ( ( size = iStream.read( readArray ) ) > 0 ) {
+                    oStream.write( readArray, 0, size );
+                    ++count;
+                    if ( fileSize > Definitions.DOWNLOAD_BUFFER_SIZE ) {
+                        Log.d( "XXXX", "Uploader - upload progress percent = " + ( int ) ( ( count * Definitions.DOWNLOAD_BUFFER_SIZE * 100 ) / fileSize ) );
+                    } else {
+                        Log.d( "XXXX", "Uploader - upload count = " + count + ", progress = 100" );
+                    }
+                }
+                Log.d( "XXXX", "uploader's done uploading : " + filePath + " !!" );
+
+                oStream.close();
+                iStream.close();
+                socket.close();
+                return true;
+            } catch ( Exception e ) {
+                e.printStackTrace();
+                return false;
+            }
         }
+    }
+
+    // public void uploadFile( String destinationAddress, String filePath, long
+    // fileSize ) {
+    // Socket socket = null;
+    // FileInputStream iStream = null;
+    // FileOutputStream oStream = null;
+    //
+    // try {
+    // socket = new Socket( destinationAddress, Definitions.FILE_TRANSFER_PORT
+    // );
+    // oStream = ( FileOutputStream ) socket.getOutputStream();
+    // iStream = new FileInputStream( new File( filePath ) );
+    // } catch ( Exception e ) {
+    // e.printStackTrace();
+    // }
+    // try {
+    // socket.sendUrgentData( 100 );
+    // byte[] a = new byte[ Definitions.DOWNLOAD_BUFFER_SIZE ];
+    // int size;
+    // while ( ( size = iStream.read( a ) ) > 0 ) {
+    // oStream.write( a, 0, size );
+    // }
+    // oStream.close();
+    // iStream.close();
+    // socket.close();
+    // } catch ( Exception e ) {
+    // e.printStackTrace();
+    // }
+    // }
+
+    public String getFileNameTrivial( String filePath ) {
+        return filePath.substring( filePath.lastIndexOf( "/" ) + 1 );
     }
 
 }

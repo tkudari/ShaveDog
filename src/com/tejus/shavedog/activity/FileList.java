@@ -1,6 +1,7 @@
 package com.tejus.shavedog.activity;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.StringTokenizer;
 
 import com.tejus.shavedog.Definitions;
@@ -27,6 +28,7 @@ public class FileList extends Activity {
 
     Context mContext;
     ArrayList<String> mFiles = new ArrayList<String>();
+    HashMap<String, String> mFileLengthMap = new HashMap<String, String>();
     ListView lv;
     Button backButton;
     private ShaveService mShaveService;
@@ -53,7 +55,18 @@ public class FileList extends Activity {
             public void onItemClick( AdapterView<?> arg0, View arg1, int position, long id ) {
                 Log.d( "XXXX", "position = " + position + ", id = " + id );
                 Log.d( "XXXX", "mFiles.get( position ) = " + mFiles.get( position ) + ", fromaddress = " + fromAddress );
-                mShaveService.sendMessage( fromAddress, Definitions.REQUEST_FILE + ":"+ mFiles.get( position ) );
+                String filePath = mFiles.get( position );
+                // if it's a file, fire up the Downloader, send a REQUEST_FILE
+                if ( isNotADirectory( filePath ) ) {
+                    filePath = stripLengthOff( mFiles.get( position ) );
+                    mShaveService.downloadFile( filePath, Long.parseLong( mFileLengthMap.get( mFiles.get( position ) ) ), mContext );
+                    mShaveService.sendMessage( fromAddress,
+                            Definitions.REQUEST_FILE + ":" + cleanThisStringUp( filePath ) + ":" + mFileLengthMap.get( mFiles.get( position ) ) );
+                } else {
+                    //TODO: deal with dir dloads
+                    mShaveService.sendMessage( fromAddress,
+                            Definitions.REQUEST_DIRECTORY + ":" + cleanThisStringUp( filePath ) + ":" + mFileLengthMap.get( mFiles.get( position ) ) );
+                }
             }
 
         } );
@@ -67,6 +80,18 @@ public class FileList extends Activity {
             }
         } );
 
+    }
+
+    protected boolean isNotADirectory( String filePath ) {
+        return !( filePath.trim().startsWith( "#" ) );
+    }
+
+    protected String stripLengthOff( String filePath ) {
+        return filePath.substring( 0, filePath.lastIndexOf( "^" ) );
+    }
+
+    protected String cleanThisStringUp( String string ) {
+        return string.replace( "#", "" ).replace( "^", "" );
     }
 
     void initShaveServiceStuff() {
@@ -92,10 +117,20 @@ public class FileList extends Activity {
         StringTokenizer strTok = new StringTokenizer( string, "," );
         while ( strTok.hasMoreTokens() ) {
             word = strTok.nextToken();
+            StringTokenizer lengthTok = new StringTokenizer( word, "^" );
+            String[] fileLengthFinder = new String[ 2 ];
+            for ( int i = 0; lengthTok.hasMoreTokens(); i++ ) {
+                fileLengthFinder[ i ] = lengthTok.nextToken();
+            }
             mFiles.add( word.replace( " ", "" ).replace( "[", "" ).replace( "]", "" ) );
             Log.d( "XXXX", "file added = " + mFiles.get( index ) );
+            if ( fileLengthFinder[ 1 ] != null ) {
+                mFileLengthMap.put( mFiles.get( index ), fileLengthFinder[ 1 ] );
+            }
             ++index;
         }
+
+        Log.d( "XXXX", "mFileLengthMap = " + mFileLengthMap.toString() );
 
     }
 

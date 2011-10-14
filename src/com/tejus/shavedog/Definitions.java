@@ -7,8 +7,7 @@ public class Definitions {
     public static InetAddress IP_ADDRESS_INETADDRESS;
     public static int BROADCAST_SERVER_PORT = 5555;
     public static int GENERIC_SERVER_PORT = 5565;
-    public static final int FILE_TRANSFER_PORT = 5575;
-    
+    public static final int FILE_TRANSFER_PORT = 5575;    
     
     public static final int COMMAND_BUFSIZE = 4000;
     public static final int DOWNLOAD_BUFFER_SIZE = 10000;
@@ -16,6 +15,7 @@ public class Definitions {
     public static final String TAG = "XXXX";
     public static final boolean DASHWIRE = true;
     public static final int SOCKET_TIMEOUT = 1000000; //TODO: decide the correct value?    
+    
     public static String USERNAME;
     public static String credsPrefFile = "credsPrefFile";
     public static String prefUserName = "pUserName";
@@ -28,6 +28,8 @@ public class Definitions {
     public static String REQUEST_LISTING = "show_files";
     public static String LISTING_REPLY = "listing_reply";
     public static String REQUEST_FILE = "request_file";    
+    public static String REQUEST_DIRECTORY = "request_directory";
+    
     
     //Intent Names:
     public static String INTENT_QUERY_LIST= "com.tejus.shavedog.query_list";
