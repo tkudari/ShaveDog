@@ -10,7 +10,7 @@ public class Definitions {
     public static final int FILE_TRANSFER_PORT = 5575;    
     
     public static final int COMMAND_BUFSIZE = 4000;
-    public static final int DOWNLOAD_BUFFER_SIZE = 10000;
+    public static final int DOWNLOAD_BUFFER_SIZE = 32000;
     public static String QUERY_LIST = "query_list";
     public static final String TAG = "XXXX";
     public static final boolean DASHWIRE = true;

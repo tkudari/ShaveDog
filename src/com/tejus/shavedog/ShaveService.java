@@ -36,6 +36,8 @@ import android.os.Binder;
 import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
+import android.view.View;
+import android.widget.RemoteViews;
 import android.widget.Toast;
 
 public class ShaveService extends Service {
@@ -93,6 +95,55 @@ public class ShaveService extends Service {
         PendingIntent contentIntent = PendingIntent.getActivity( this, 0, new Intent( this, ShaveDogActivity.class ), 0 );
         notification.setLatestEventInfo( this, getText( R.string.this_the_string ), text, contentIntent );
         mNM.notify( NOTIFICATION, notification );
+    }
+
+    // private void showProgressNotification( String filePath, int progress ) {
+    // RemoteViews contentView = new RemoteViews( getPackageName(),
+    // R.layout.custom_notification_layout );
+    // CharSequence text = getText( R.string.downloading ) + " " +
+    // getFileNameTrivial( filePath );
+    // Notification notification = new Notification( R.drawable.iconshave, null,
+    // System.currentTimeMillis() );
+    // notification.flags = Notification.FLAG_ONGOING_EVENT;
+    //
+    // contentView.setProgressBar( R.id.download_progress, 100, progress, false
+    // );
+    // notification.contentView = contentView;
+    // PendingIntent contentIntent = PendingIntent.getActivity( this, 0, new
+    // Intent( this, ShaveDogActivity.class ), 0 );
+    //
+    // notification.setLatestEventInfo( this, text, null, contentIntent );
+    // mNM.notify( NOTIFICATION, notification );
+    //
+    // }
+
+    private void showProgressNotification( Context context, String filePath, int progress ) {
+        Intent notificationIntent = new Intent( this, ShaveDogActivity.class );
+        PendingIntent contentIntent = PendingIntent.getActivity( this, 0, notificationIntent, 0 );
+
+        Notification notification = new Notification( R.drawable.iconshave, "bleh", System.currentTimeMillis() );
+        notification.setLatestEventInfo( context, null, null, contentIntent );
+        notification.flags = Notification.FLAG_ONGOING_EVENT;
+
+        RemoteViews contentView = new RemoteViews( getPackageName(), R.layout.custom_notification_layout );
+
+        contentView.setImageViewResource( R.id.image, R.drawable.iconshave );
+        contentView.setTextViewText( R.id.title, getResources().getString( R.string.downloading ) );
+        contentView.setTextViewText( R.id.text, getFileNameTrivial( filePath ) );
+        // smoothen the progressbar:
+        progress = ( progress >= 0 && progress <= 10 ) ? 0 : ( ( progress > 10 && progress <= 25 ) ? 25 : ( progress > 25 && progress <= 50 ) ? 50
+                : ( progress > 50 && progress <= 75 ) ? 75 : 90 );
+        contentView.setProgressBar( R.id.download_progress, 100, progress, false );
+
+        if ( progress == 100 ) {
+            contentView.setViewVisibility( R.id.download_progress, View.GONE );
+            contentView.setTextViewText( R.id.title, getResources().getString( R.string.done_downloading ) );
+        }
+
+        notification.contentView = contentView;
+        notification.contentIntent = contentIntent;
+        mNM.notify( NOTIFICATION, notification );
+
     }
 
     private class RequestListener extends AsyncTask<DatagramSocket, DatagramPacket, Void> {
@@ -354,7 +405,7 @@ public class ShaveService extends Service {
     }
 
     void updateDownloadProgress( Context context, String filePath, int progress ) {
-
+        showProgressNotification( context, filePath, progress );
     }
 
     // ///////////////////////////////////////////////
@@ -371,7 +422,7 @@ public class ShaveService extends Service {
 
         @Override
         protected void onProgressUpdate( Integer... progress ) {
-            // updateDownloadProgress( context, filePath, progress[ 0 ] );
+            updateDownloadProgress( this.context, filePath, progress[ 0 ] );
         }
 
         @Override
@@ -389,21 +440,30 @@ public class ShaveService extends Service {
                     FileOutputStream oStream = new FileOutputStream( new File( DEFAULT_DOWNLOAD_LOC + "/" + getFileNameTrivial( filePath ) ) );
                     Log.d( "XXXX", "Downloader - will start dloading to : " + DEFAULT_DOWNLOAD_LOC + "/" + getFileNameTrivial( filePath ) );
                     byte[] readByte = new byte[ Definitions.DOWNLOAD_BUFFER_SIZE ];
-                    int size;
+                    int size, previousProgress = 0;
                     long count = 0;
                     while ( ( size = iStream.read( readByte ) ) > 0 ) {
                         oStream.write( readByte, 0, size );
-                        ++count;
+                        count += ( long ) size;
                         if ( fileSize > Definitions.DOWNLOAD_BUFFER_SIZE ) {
-                            Log.d( "XXXX", "Downloader - download count = " + count + ", progress = "
-                                    + ( int ) ( ( count * Definitions.DOWNLOAD_BUFFER_SIZE * 100 ) / fileSize ) );
+                            int progress = ( int ) ( ( count * 100 ) / fileSize );
+                            if ( progress < 100 ) {
+                                Log.d( "XXXX", "Downloader - download count = " + count + ", size here = " + size + ", progress = " + progress );
+                                if ( previousProgress != progress ) {
+                                    previousProgress = progress;
+                                    publishProgress( progress );
+                                }
+                                
+                            }
                         } else {
                             Log.d( "XXXX", "Downloader - download count = " + count + ", progress = 100" );
                         }
                     }
+                    publishProgress( 100 );
                     Log.d( "XXXX", "Downloader - done dloading : " + filePath );
                     iStream.close();
                     oStream.close();
+                    serverSocket.close();
                     return true;
                 }
             } catch ( IOException e ) {
