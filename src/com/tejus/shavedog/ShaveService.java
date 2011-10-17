@@ -43,6 +43,7 @@ import android.widget.Toast;
 public class ShaveService extends Service {
     private DatagramSocket mBroadcastSocket, mGenericSocket;
     String mUserName;
+    int mPreviousProgress = 0;
 
     private static final String DEFAULT_DOWNLOAD_LOC = Environment.getExternalStorageDirectory().toString();
 
@@ -130,14 +131,28 @@ public class ShaveService extends Service {
         contentView.setImageViewResource( R.id.image, R.drawable.iconshave );
         contentView.setTextViewText( R.id.title, getResources().getString( R.string.downloading ) );
         contentView.setTextViewText( R.id.text, getFileNameTrivial( filePath ) );
-        // smoothen the progressbar:
-        progress = ( progress >= 0 && progress <= 10 ) ? 0 : ( ( progress > 10 && progress <= 25 ) ? 25 : ( progress > 25 && progress <= 50 ) ? 50
-                : ( progress > 50 && progress <= 75 ) ? 75 : 90 );
-        contentView.setProgressBar( R.id.download_progress, 100, progress, false );
-
-        if ( progress == 100 ) {
+        contentView.setTextViewText( R.id.progress, progress + " %" );
+        if ( progress == -1 ) {
+            contentView.setViewVisibility( R.id.download_progress, View.GONE );
+            contentView.setTextViewText( R.id.title, getResources().getString( R.string.download_interrupted ) );
+            mPreviousProgress = 0;
+        } else if ( progress == 100 ) {
+            Log.d( "XXXX", "gonna dispel" );
             contentView.setViewVisibility( R.id.download_progress, View.GONE );
             contentView.setTextViewText( R.id.title, getResources().getString( R.string.done_downloading ) );
+            mPreviousProgress = 0;
+        } else {
+            // smoothen the progressbar:
+            // progress = ( progress >= 0 && progress <= 10 ) ? 0 : ( ( progress
+            // > 10 && progress <= 25 ) ? 25 : ( progress > 25 && progress <= 50
+            // ) ? 50
+            // : ( progress > 50 && progress <= 75 ) ? 75 : 90 );
+            if ( mPreviousProgress != progress ) {
+                mPreviousProgress = progress;
+                Log.d( "XXXX", "ShaveService.showProgressNotification(): setting download progress = " + progress );
+                contentView.setProgressBar( R.id.download_progress, 100, progress, false );
+            }
+
         }
 
         notification.contentView = contentView;
@@ -379,15 +394,15 @@ public class ShaveService extends Service {
         return InetAddress.getByAddress( quads );
     }
 
-    public void sendMessage( String address, String message ) {
+    public void sendMessage( String destinationAddress, String message ) {
         String sendMessage = message + ":" + getOurUserName() + ":" + getOurIp().toString().replace( "/", "" ) + Definitions.END_DELIM;
         byte[] testArr = sendMessage.getBytes();
 
         Log.d( "XXXX", "sendMessage = " + sendMessage + ", len = " + sendMessage.length() );
         Log.d( "XXXX", "testarr = " + testArr.toString() + ", len = " + testArr.length );
         try {
-            Log.d( "XXXX", "destination address = " + InetAddress.getByName( address ) );
-            DatagramPacket sendPacket = new DatagramPacket( sendMessage.getBytes(), sendMessage.getBytes().length, InetAddress.getByName( address ),
+            Log.d( "XXXX", "destination address = " + InetAddress.getByName( destinationAddress ) );
+            DatagramPacket sendPacket = new DatagramPacket( sendMessage.getBytes(), sendMessage.getBytes().length, InetAddress.getByName( destinationAddress ),
                     Definitions.GENERIC_SERVER_PORT );
             Log.d( "XXXX", "gonna send out the message:" );
             mGenericSocket.send( sendPacket );
@@ -440,7 +455,7 @@ public class ShaveService extends Service {
                     FileOutputStream oStream = new FileOutputStream( new File( DEFAULT_DOWNLOAD_LOC + "/" + getFileNameTrivial( filePath ) ) );
                     Log.d( "XXXX", "Downloader - will start dloading to : " + DEFAULT_DOWNLOAD_LOC + "/" + getFileNameTrivial( filePath ) );
                     byte[] readByte = new byte[ Definitions.DOWNLOAD_BUFFER_SIZE ];
-                    int size, previousProgress = 0;
+                    int size, previousProgress = 0, mPreviousProgress = 0;
                     long count = 0;
                     while ( ( size = iStream.read( readByte ) ) > 0 ) {
                         oStream.write( readByte, 0, size );
@@ -453,11 +468,14 @@ public class ShaveService extends Service {
                                     previousProgress = progress;
                                     publishProgress( progress );
                                 }
-                                
+
                             }
                         } else {
                             Log.d( "XXXX", "Downloader - download count = " + count + ", progress = 100" );
                         }
+                    }
+                    if ( count < fileSize ) {
+                        publishProgress( -1 );
                     }
                     publishProgress( 100 );
                     Log.d( "XXXX", "Downloader - done dloading : " + filePath );

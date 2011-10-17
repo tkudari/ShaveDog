@@ -16,6 +16,9 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -63,7 +66,7 @@ public class FileList extends Activity {
                     mShaveService.sendMessage( fromAddress,
                             Definitions.REQUEST_FILE + ":" + cleanThisStringUp( filePath ) + ":" + mFileLengthMap.get( mFiles.get( position ) ) );
                 } else {
-                    //TODO: deal with dir dloads
+                    // TODO: deal with dir dloads
                     mShaveService.sendMessage( fromAddress,
                             Definitions.REQUEST_DIRECTORY + ":" + cleanThisStringUp( filePath ) + ":" + mFileLengthMap.get( mFiles.get( position ) ) );
                 }
@@ -131,6 +134,27 @@ public class FileList extends Activity {
         }
 
         Log.d( "XXXX", "mFileLengthMap = " + mFileLengthMap.toString() );
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu( Menu menu ) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate( R.menu.file_list_menu, menu );
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected( MenuItem item ) {
+        // Handle item selection
+        switch ( item.getItemId() ) {
+            case R.id.refresh_list:
+                mShaveService.sendMessage( fromAddress, Definitions.REQUEST_LISTING );
+                return true;
+
+            default:
+                return super.onOptionsItemSelected( item );
+        }
 
     }
 

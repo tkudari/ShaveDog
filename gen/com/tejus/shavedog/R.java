@@ -17,31 +17,33 @@ public final class R {
         public static final int sdf=0x7f020003;
     }
     public static final class id {
-        public static final int TextView01=0x7f06000b;
-        public static final int about=0x7f060012;
+        public static final int TextView01=0x7f06000c;
+        public static final int about=0x7f060014;
         public static final int aboutText=0x7f060000;
         public static final int back=0x7f060003;
-        public static final int details=0x7f06000f;
-        public static final int download_progress=0x7f060008;
-        public static final int dump_image_data=0x7f060011;
-        public static final int files_listview=0x7f060009;
-        public static final int friends_list=0x7f060018;
-        public static final int goto_shave_activity=0x7f060010;
-        public static final int icon=0x7f06000a;
+        public static final int details=0x7f060010;
+        public static final int download_progress=0x7f060009;
+        public static final int dump_image_data=0x7f060013;
+        public static final int files_listview=0x7f06000a;
+        public static final int friends_list=0x7f06001a;
+        public static final int goto_shave_activity=0x7f060011;
+        public static final int icon=0x7f06000b;
         public static final int image=0x7f060005;
-        public static final int label=0x7f06000c;
+        public static final int label=0x7f06000d;
         public static final int layout=0x7f060004;
-        public static final int mainLayout=0x7f06000d;
-        public static final int populate_list=0x7f060014;
-        public static final int quit=0x7f060013;
+        public static final int mainLayout=0x7f06000e;
+        public static final int populate_list=0x7f060016;
+        public static final int progress=0x7f060008;
+        public static final int quit=0x7f060015;
+        public static final int refresh_list=0x7f060012;
         public static final int set=0x7f060002;
-        public static final int set_creds=0x7f060015;
-        public static final int test_api=0x7f060016;
-        public static final int test_api2=0x7f060017;
+        public static final int set_creds=0x7f060017;
+        public static final int test_api=0x7f060018;
+        public static final int test_api2=0x7f060019;
         public static final int text=0x7f060007;
         public static final int title=0x7f060006;
         public static final int username=0x7f060001;
-        public static final int welcome=0x7f06000e;
+        public static final int welcome=0x7f06000f;
     }
     public static final class layout {
         public static final int about=0x7f030000;
@@ -53,7 +55,8 @@ public final class R {
     }
     public static final class menu {
         public static final int about_menu=0x7f050000;
-        public static final int shave_menu=0x7f050001;
+        public static final int file_list_menu=0x7f050001;
+        public static final int shave_menu=0x7f050002;
     }
     public static final class string {
         public static final int about=0x7f040004;
@@ -62,6 +65,7 @@ public final class R {
         public static final int back=0x7f04000f;
         public static final int default_username_used=0x7f04000d;
         public static final int done_downloading=0x7f040020;
+        public static final int download_interrupted=0x7f040021;
         public static final int downloading=0x7f04001f;
         public static final int dump_img_data=0x7f040002;
         public static final int dump_img_file=0x7f040010;
@@ -70,14 +74,15 @@ public final class R {
         public static final int get_list=0x7f040001;
         public static final int hash_video_file=0x7f040012;
         public static final int main_activity=0x7f040006;
-        public static final int md5_img_file=0x7f040021;
-        public static final int new_request=0x7f040022;
+        public static final int md5_img_file=0x7f040023;
+        public static final int new_request=0x7f040024;
         public static final int no_images_found=0x7f040013;
         public static final int no_videos_found=0x7f040014;
         public static final int no_wifi=0x7f04001c;
         public static final int not_loaded=0x7f040008;
         public static final int populate_list=0x7f040009;
         public static final int quit=0x7f040007;
+        public static final int refresh_file_list=0x7f040022;
         public static final int set=0x7f04000c;
         public static final int set_creds=0x7f04000a;
         public static final int shave_service_connected=0x7f040019;

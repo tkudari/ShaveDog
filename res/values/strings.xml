@@ -41,6 +41,10 @@
 	
 	<string name="downloading">Downloading file:</string>
 	<string name="done_downloading">Successfully Downloaded file:</string>
+	<string name="download_interrupted">Check your devices. Download interrupted for file:</string>
+	<string name="refresh_file_list">Refresh list</string>
+	
+	
 
 	<string name="md5_img_file">MD5 of first img</string>   	
 	<string name="new_request">You have a new Request!</string>   	
