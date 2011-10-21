@@ -1,13 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:orientation="vertical" android:layout_width="fill_parent"
 	android:layout_height="fill_parent">
-
-	<ListView android:id="@+id/files_listview"
-		android:layout_width="fill_parent" android:layout_height="fill_parent"></ListView>
-
 
 	<Button android:id="@+id/back" android:layout_width="wrap_content"
 		android:layout_height="wrap_content" android:text="@string/back" />
 
-</LinearLayout>
+	<Button android:id="@+id/home" android:layout_width="wrap_content"
+		android:layout_height="wrap_content" android:text="@string/home"
+		android:layout_toRightOf="@id/back" android:layout_marginLeft="40dip" />
+
+	<Button android:id="@+id/refresh" android:layout_width="wrap_content"
+		android:layout_height="wrap_content" android:text="@string/refresh_file_list"
+		android:layout_toRightOf="@id/home" android:layout_marginLeft="40dip" />
+
+	<ListView android:id="@android:id/list" android:layout_width="wrap_content"
+		android:layout_height="wrap_content" android:layout_weight="1"
+		android:layout_below="@id/back"></ListView>
+
+
+
+
+</RelativeLayout>

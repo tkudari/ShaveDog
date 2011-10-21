@@ -5,14 +5,9 @@
     <string name="dump_img_data">Dump video data</string>
     <string name="welcome">Choose an option with the Menu key</string>
     <string name="about">About..</string>
-    <string name="aboutContent">This is currently a diagnostic tool under development. More features will be added.\n\n 
-    		\'Dump image data\' dumps details about the images currently on the device. These are taken from the MediaProvider. However, the \'Actual file size\' and \
-    		the \'Actual mTime\' are read from the image file itself. \(These details are also being logged\) \n\n \
-    		\'Hash my Images\' and \'Hash my videos\' produce SHA1 or MD5 hashes of your files and dump info about time taken\
-    		, file names, sizes, etc. to the screen and logs \n\n \
-    		\'Flip Hash algorithm\' toggles between SHA1 and MD5 \n\n \
-    		It also does what the title says; \
-    	hold your phone with the app running, close to a dog. </string>
+    <string name="aboutContent">
+    		It does what the title says; \
+    	hold your phone with the app running, close to a dog and watch the fur fly. </string>
    	<string name="main_activity">Go Back</string>
    	<string name="quit">Quit</string>
    	<string name="not_loaded">No images found, or MediaProvider not populated yet. \n Give it some time or take some pictures.</string>
@@ -23,6 +18,7 @@
    	<string name="default_username_used">Username not set, using default user name:</string>
    	<string name="username_too_small">Minimum username length should be = </string>
    	<string name="back">Back</string>
+   	<string name="home">Home</string>
    	<string name="dump_img_file">Dump first img</string>
 	<string name="test_api">test whatever</string>
 	<string name="hash_video_file">Hash my videos</string>

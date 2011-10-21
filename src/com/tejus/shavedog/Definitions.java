@@ -29,6 +29,8 @@ public class Definitions {
     public static String LISTING_REPLY = "listing_reply";
     public static String REQUEST_FILE = "request_file";    
     public static String REQUEST_DIRECTORY = "request_directory";
+    public static String HOME_DIRECTORY = "";
+    
     
     
     //Intent Names:

@@ -45,7 +45,13 @@ public class ShaveService extends Service {
     String mUserName;
     int mPreviousProgress = 0;
 
+    // FileList values:
+
+    String mCurrentDir = null;
+    String mPreviousDir = null;
+
     private static final String DEFAULT_DOWNLOAD_LOC = Environment.getExternalStorageDirectory().toString();
+    private static String mHomeDirectory = null;
 
     WifiManager wifi;
     DhcpInfo dhcp;
@@ -72,10 +78,22 @@ public class ShaveService extends Service {
         mNM = ( NotificationManager ) getSystemService( NOTIFICATION_SERVICE );
         showNotification();
         setUpNetworkStuff();
+        initDirectoryStuff();
         // setup our request broadcast server:
         new RequestListener().execute( mBroadcastSocket );
         // this's our generic listener:
         new RequestListener().execute( mGenericSocket );
+    }
+
+    private void initDirectoryStuff() {
+        // doing this coz of the '/':
+        if ( Definitions.HOME_DIRECTORY.length() > 0 ) {
+            mHomeDirectory = Environment.getExternalStorageDirectory().toString() + "/" + Definitions.HOME_DIRECTORY;
+        } else {
+            mHomeDirectory = Environment.getExternalStorageDirectory().toString();
+        }
+
+        Log.d( "XXXX", "ShaveService.initDirectoryStuff - set mHomeDirectory = " + mHomeDirectory );
     }
 
     @Override
@@ -240,12 +258,12 @@ public class ShaveService extends Service {
 
         // request file listing:
         if ( words[ 0 ].equals( Definitions.REQUEST_LISTING ) ) {
-            ArrayList<String> cardListing = getSdCardListing();
+            ArrayList<String> cardListing = getSdCardListing( "" );
             Log.d( "XXXX", "cardListing received = " + cardListing.toString() );
-            sendMessage( senderAddress, Definitions.LISTING_REPLY + ":" + cardListing );
+            sendMessage( senderAddress, Definitions.LISTING_REPLY + ":" + cardListing + "$" + mHomeDirectory );
         }
 
-        // listing received:
+        // listing received (this is for REQUEST_LISTING & REQUEST_DIRECTORY):
         if ( words[ 0 ].equals( Definitions.LISTING_REPLY ) ) {
             Log.d( "XXXX", "eg" );
             startActivity( ( new Intent().setClass( this, FileList.class ).setFlags( Intent.FLAG_ACTIVITY_NEW_TASK ).putExtra( "file_list", words[ 1 ] ).putExtra(
@@ -256,6 +274,17 @@ public class ShaveService extends Service {
             handleDownloadRequest( words[ 1 ], words[ 2 ], words[ 4 ] );
         }
 
+        if ( words[ 0 ].equals( Definitions.REQUEST_DIRECTORY ) ) {
+            Log.d( "XXXX", "dir dload request for = " + words[ 1 ] );
+            String dirRequested = words[ 1 ].substring( words[ 1 ].lastIndexOf( mHomeDirectory ) + 1 );
+            Log.d( "XXXX", "dirReq = " + dirRequested );
+
+            ArrayList<String> cardListing = getSdCardListing( dirRequested );
+            Log.d( "XXXX", "dir listing for: " + words[ 1 ] + " = " + cardListing.toString() );
+            sendMessage( words[ 3 ], Definitions.LISTING_REPLY + ":" + cardListing + "$" + words[ 1 ] );
+
+        }
+
     }
 
     private void handleDownloadRequest( String filePath, String fileLength, String destinationAddress ) {
@@ -263,9 +292,9 @@ public class ShaveService extends Service {
         uploadFile( destinationAddress, filePath, Long.parseLong( fileLength ), getApplicationContext() );
     }
 
-    private ArrayList<String> getSdCardListing() {
+    private ArrayList<String> getSdCardListing( String directoryName ) {
         try {
-            return new SdCardLister().execute().get();
+            return new SdCardLister( directoryName ).execute().get();
         } catch ( Exception e ) {
             e.printStackTrace();
             return null;
@@ -274,17 +303,34 @@ public class ShaveService extends Service {
     }
 
     private class SdCardLister extends AsyncTask<Void, Void, ArrayList<String>> {
+        String directoryName;
+
+        // this should be w.r.t mHomeDirectory:
+        public SdCardLister( String directoryName ) {
+            this.directoryName = directoryName;
+        }
 
         @Override
         protected ArrayList<String> doInBackground( Void... params ) {
             ArrayList<String> files = new ArrayList<String>();
-            File file[] = Environment.getExternalStorageDirectory().listFiles();
-            for ( File iFile : file ) {
-                if ( iFile.isDirectory() ) {
-                    files.add( "#" + iFile.getAbsolutePath() );
-                } else {
-                    files.add( iFile.getAbsolutePath() + "^" + iFile.length() );
+            File file[] = null;
+            if ( directoryName.length() > 0 ) {
+                file = new File( mHomeDirectory + "/" + directoryName ).listFiles();
+            } else {
+                file = new File( mHomeDirectory ).listFiles();
+            }
+            // if the folder isn't empty:
+            if ( file != null ) {
+                for ( File iFile : file ) {
+                    if ( iFile.isDirectory() ) {
+                        files.add( "#" + iFile.getAbsolutePath() );
+                    } else {
+                        files.add( iFile.getAbsolutePath() + "^" + iFile.length() );
+                    }
                 }
+            } else {
+                // the folder's empty
+                files.add( "<EMPTY FOLDER>" );
             }
             return files;
         }
@@ -386,6 +432,7 @@ public class ShaveService extends Service {
 
     InetAddress getBroadcastAddress() throws IOException {
 
+        Log.d( "XXXX", "dhcp netmask = " + dhcp.netmask );
         int broadcast = ( dhcp.ipAddress & dhcp.netmask ) | ~dhcp.netmask;
         byte[] quads = new byte[ 4 ];
         for ( int k = 0; k < 4; k++ )
@@ -595,6 +642,22 @@ public class ShaveService extends Service {
 
     public String getFileNameTrivial( String filePath ) {
         return filePath.substring( filePath.lastIndexOf( "/" ) + 1 );
+    }
+
+    public void setCurrentDir( String dir ) {
+        mCurrentDir = dir;
+    }
+
+    public void setPreviousDir( String dir ) {
+        mPreviousDir = dir;
+    }
+
+    public String getCurrentDir() {
+        return mCurrentDir;
+    }
+
+    public String getPreviousDir() {
+        return mPreviousDir;
     }
 
 }
