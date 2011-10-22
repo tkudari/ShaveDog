@@ -17,7 +17,6 @@ import android.content.ServiceConnection;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.text.SpannableString;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -25,11 +24,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,7 +36,7 @@ public class FileList extends ListActivity {
     ArrayList<String> mFiles = new ArrayList<String>();
     HashMap<String, String> mFileLengthMap = new HashMap<String, String>();
     ListView lv;
-    Button backButton;
+    Button backButton, homeButton, refreshButton;
     private ShaveService mShaveService;
     private ServiceConnection mConnection;
     String fromAddress;
@@ -51,7 +47,9 @@ public class FileList extends ListActivity {
         super.onCreate( savedInstanceState );
         setContentView( R.layout.file_list );
         backButton = ( Button ) findViewById( R.id.back );
-        
+        homeButton = ( Button ) findViewById( R.id.home );
+        refreshButton = ( Button ) findViewById( R.id.refresh );
+
         mContext = this;
         initShaveServiceStuff();
         Bundle bundle = getIntent().getExtras();
@@ -63,13 +61,25 @@ public class FileList extends ListActivity {
         MySimpleArrayAdapter adapter = new MySimpleArrayAdapter( this, mFiles );
         setListAdapter( adapter );
         backButton.setOnClickListener( new View.OnClickListener() {
-
             @Override
             public void onClick( View v ) {
-                mShaveService.sendMessage( fromAddress, Definitions.REQUEST_DIRECTORY + ":" + cleanThisStringUp( mShaveService.getPreviousDir() ) );
+                mShaveService.sendMessage( fromAddress, Definitions.REQUEST_DIRECTORY + ":" + getParentDirectory( mCurrentDirectory ) );
             }
         } );
 
+        homeButton.setOnClickListener( new View.OnClickListener() {
+            @Override
+            public void onClick( View v ) {
+                mShaveService.sendMessage( fromAddress, Definitions.REQUEST_DIRECTORY + ":" + getParentDirectory( ShaveService.mHomeDirectory ) );
+            }
+        } );
+
+        refreshButton.setOnClickListener( new View.OnClickListener() {
+            @Override
+            public void onClick( View v ) {
+                mShaveService.sendMessage( fromAddress, Definitions.REQUEST_DIRECTORY + ":" + mCurrentDirectory );
+            }
+        } );
     }
 
     protected boolean isNotADirectory( String filePath ) {
@@ -170,7 +180,7 @@ public class FileList extends ListActivity {
             mShaveService.downloadFile( filePath, Long.parseLong( mFileLengthMap.get( mFiles.get( position ) ) ), mContext );
             mShaveService.sendMessage( fromAddress,
                     Definitions.REQUEST_FILE + ":" + cleanThisStringUp( filePath ) + ":" + mFileLengthMap.get( mFiles.get( position ) ) );
-        } else { // TODO: deal with dir dloads
+        } else {
             mShaveService.setPreviousDir( mCurrentDirectory );
             mShaveService.sendMessage( fromAddress, Definitions.REQUEST_DIRECTORY + ":" + cleanThisStringUp( filePath ) );
         }
@@ -188,22 +198,59 @@ public class FileList extends ListActivity {
 
         @Override
         public View getView( int position, View convertView, ViewGroup parent ) {
+            String name = null;
+
             LayoutInflater inflater = context.getLayoutInflater();
             View rowView = inflater.inflate( R.layout.file_row, null, true );
-            TextView textView = ( TextView ) rowView.findViewById( R.id.item_name );
+            TextView itemName = ( TextView ) rowView.findViewById( R.id.item_name );
+            TextView itemSize = ( TextView ) rowView.findViewById( R.id.item_size );
             if ( fileList.get( position ).startsWith( "#" ) ) {
                 Log.d( "XXXX", "setting bold for position = " + position );
-                textView.setTypeface( null, Typeface.BOLD );
+                itemName.setTypeface( null, Typeface.BOLD );
+                itemSize.setVisibility( View.GONE );
+                name = mShaveService.getFileNameTrivial( fileList.get( position ) );
             } else {
                 Log.d( "XXXX", "setting italics for position = " + position );
-                textView.setTypeface( null, Typeface.ITALIC );
+                itemName.setTypeface( null, Typeface.ITALIC );
+                if ( mFileLengthMap.get( mFiles.get( position ) ) != null ) {
+                    itemSize.setText( saneFileSizeRepresentation( mFileLengthMap.get( mFiles.get( position ) ) ) );
+                }
+                name = stripLengthOff( mShaveService.getFileNameTrivial( fileList.get( position ) ) );
             }
-            textView.setText( mShaveService.getFileNameTrivial( fileList.get( position ) ) );
+            itemName.setText( name );
 
             return rowView;
         }
     }
-    
+
+    String getParentDirectory( String directory ) {
+        // if we're already the home dir, return us back:
+        if ( directory.equals( ShaveService.mHomeDirectory ) ) {
+            return directory;
+        } else {
+            // else, return our parent dir:
+            return directory.substring( 0, directory.lastIndexOf( "/" ) );
+        }
+    }
+
+    String saneFileSizeRepresentation( String fileSize ) {
+        Log.d( "XXXX", "saneFileSizeRepresentation called for - " + fileSize );
+        fileSize = fileSize.replace( "]", "" ).replace( "[", "" );
+        if ( fileSize.length() < 4 ) {
+            return fileSize + " B";
+        } else if ( fileSize.length() < 7 ) {
+            return String.valueOf( ( Long.parseLong( fileSize ) / 1000 ) ) + " KB";
+        } else if ( fileSize.length() < 10 ) {
+            Log.d( "XXXX", "for MB: " + ( Long.parseLong( fileSize ) / 1000000 ) );
+            return String.valueOf( ( Long.parseLong( fileSize ) / ( long ) 1000000 ) ) + " MB";
+        } else if ( fileSize.length() < 13 ) {
+            return String.valueOf( ( Long.parseLong( fileSize ) / 1000000000 ) ) + " GB";
+        } else {
+            return null;
+        }
+
+    }
+
 }
 
 // a beauty, aint' it?:

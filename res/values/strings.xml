@@ -17,6 +17,7 @@
    	<string name="set">Set!</string>
    	<string name="default_username_used">Username not set, using default user name:</string>
    	<string name="username_too_small">Minimum username length should be = </string>
+   	<string name="up">Up</string>
    	<string name="back">Back</string>
    	<string name="home">Home</string>
    	<string name="dump_img_file">Dump first img</string>

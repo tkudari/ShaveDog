@@ -50,8 +50,10 @@ public class ShaveService extends Service {
     String mCurrentDir = null;
     String mPreviousDir = null;
 
-    private static final String DEFAULT_DOWNLOAD_LOC = Environment.getExternalStorageDirectory().toString();
-    private static String mHomeDirectory = null;
+    private static String DEFAULT_DOWNLOAD_LOC = null;
+    // This is the top-most directory you can visit. To modify this, change
+    // Definitions.HOME_DIRECTORY.
+    public static String mHomeDirectory = null;
 
     WifiManager wifi;
     DhcpInfo dhcp;
@@ -92,6 +94,8 @@ public class ShaveService extends Service {
         } else {
             mHomeDirectory = Environment.getExternalStorageDirectory().toString();
         }
+        DEFAULT_DOWNLOAD_LOC = mHomeDirectory + "/ShaveDog";
+        new File( DEFAULT_DOWNLOAD_LOC ).mkdirs();
 
         Log.d( "XXXX", "ShaveService.initDirectoryStuff - set mHomeDirectory = " + mHomeDirectory );
     }
@@ -305,7 +309,6 @@ public class ShaveService extends Service {
     private class SdCardLister extends AsyncTask<Void, Void, ArrayList<String>> {
         String directoryName;
 
-        // this should be w.r.t mHomeDirectory:
         public SdCardLister( String directoryName ) {
             this.directoryName = directoryName;
         }
@@ -315,8 +318,10 @@ public class ShaveService extends Service {
             ArrayList<String> files = new ArrayList<String>();
             File file[] = null;
             if ( directoryName.length() > 0 ) {
-                file = new File( mHomeDirectory + "/" + directoryName ).listFiles();
+                Log.d( "XXXX", "SdCardLister: searching directory - " + directoryName );
+                file = new File( directoryName ).listFiles();
             } else {
+                Log.d( "XXXX", "SdCardLister: searching directory - " + mHomeDirectory );
                 file = new File( mHomeDirectory ).listFiles();
             }
             // if the folder isn't empty:
@@ -502,7 +507,7 @@ public class ShaveService extends Service {
                     FileOutputStream oStream = new FileOutputStream( new File( DEFAULT_DOWNLOAD_LOC + "/" + getFileNameTrivial( filePath ) ) );
                     Log.d( "XXXX", "Downloader - will start dloading to : " + DEFAULT_DOWNLOAD_LOC + "/" + getFileNameTrivial( filePath ) );
                     byte[] readByte = new byte[ Definitions.DOWNLOAD_BUFFER_SIZE ];
-                    int size, previousProgress = 0, mPreviousProgress = 0;
+                    int size, previousProgress = 0;
                     long count = 0;
                     while ( ( size = iStream.read( readByte ) ) > 0 ) {
                         oStream.write( readByte, 0, size );
