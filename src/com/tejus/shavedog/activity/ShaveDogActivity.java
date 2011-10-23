@@ -104,7 +104,7 @@ public class ShaveDogActivity extends Activity {
     }
 
     private void populateList() {
-        mShaveService.populateList();
+        mShaveService.testPopulateList();
 
     }
 

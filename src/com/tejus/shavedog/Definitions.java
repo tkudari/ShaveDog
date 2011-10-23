@@ -7,6 +7,7 @@ public class Definitions {
     public static InetAddress IP_ADDRESS_INETADDRESS;
     public static int BROADCAST_SERVER_PORT = 5555;
     public static int GENERIC_SERVER_PORT = 5565;
+    public static int TEST_SERVER_PORT = 5585;
     public static final int FILE_TRANSFER_PORT = 5575;    
     
     public static final int COMMAND_BUFSIZE = 4000;

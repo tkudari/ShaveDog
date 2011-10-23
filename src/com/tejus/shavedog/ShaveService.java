@@ -41,7 +41,7 @@ import android.widget.RemoteViews;
 import android.widget.Toast;
 
 public class ShaveService extends Service {
-    private DatagramSocket mBroadcastSocket, mGenericSocket;
+    private DatagramSocket mBroadcastSocket, mGenericSocket, mTestSocket;
     String mUserName;
     int mPreviousProgress = 0;
 
@@ -85,6 +85,8 @@ public class ShaveService extends Service {
         new RequestListener().execute( mBroadcastSocket );
         // this's our generic listener:
         new RequestListener().execute( mGenericSocket );
+
+        new TestRequestListener().execute( mTestSocket );
     }
 
     private void initDirectoryStuff() {
@@ -209,6 +211,38 @@ public class ShaveService extends Service {
         }
     }
 
+    private class TestRequestListener extends AsyncTask<DatagramSocket, DatagramPacket, Void> {
+        @Override
+        protected void onProgressUpdate( DatagramPacket... packet ) {
+            Log.d( "XXXX", "test packet received from = " + packet[ 0 ].getAddress().getHostAddress() );
+            processTestPacket( packet[ 0 ] );
+        }
+
+        @Override
+        protected Void doInBackground( DatagramSocket... requestSocket ) {
+            byte[] buffer = new byte[ Definitions.COMMAND_BUFSIZE ];
+            DatagramPacket packet;
+            while ( true ) {
+                try {
+                    packet = new DatagramPacket( buffer, buffer.length );
+                    Log.d( "XXXX", "server listening on : " + requestSocket[ 0 ].getLocalPort() );
+                    requestSocket[ 0 ].receive( packet );
+                    Log.d( "XXXX", "Stuff received by test Server = " + new String( packet.getData() ) );
+                    publishProgress( packet );
+                    Log.d( "XXXX", "done with publishProgress" );
+
+                } catch ( IOException e ) {
+                    Log.d( "XXXX", "Server: Receive timed out.." );
+                }
+            }
+        }
+    }
+
+    void processTestPacket( DatagramPacket packet ) {
+        String data = packet.getData().toString();
+        Log.d( "XXXX", "processTestPacket received = " + data );
+    }
+
     private void dealWithReceivedPacket( DatagramPacket packet ) {
         String words[] = new String[ Definitions.COMMAND_WORD_LENGTH + 1 ];
         int wordCounter = 0;
@@ -217,7 +251,7 @@ public class ShaveService extends Service {
         Log.d( "XXXX", "command here = " + command );
 
         StringTokenizer strTok = new StringTokenizer( command, Definitions.COMMAND_DELIM );
-        while ( strTok.hasMoreTokens() && wordCounter <= Definitions.COMMAND_WORD_LENGTH ) {
+        while ( strTok.hasMoreTokens() && wordCounter < Definitions.COMMAND_WORD_LENGTH ) {
             words[ wordCounter ] = strTok.nextToken();
             Log.d( "XXXX", "word here = " + words[ wordCounter ] );
             ++wordCounter;
@@ -226,6 +260,10 @@ public class ShaveService extends Service {
             Log.d( "XXXX", "word = " + word );
 
         senderAddress = words[ 2 ];
+
+        if ( words[ 0 ].equals( "DISCOVER" ) ) {
+            Log.d( "XXXX", "DISCOVER packet received...." );
+        }
 
         // this's a broadcast:
         if ( words[ 0 ].equals( Definitions.QUERY_LIST ) ) {
@@ -335,7 +373,7 @@ public class ShaveService extends Service {
                 }
             } else {
                 // the folder's empty
-                files.add( "<EMPTY FOLDER>" );
+                files.add( "" );
             }
             return files;
         }
@@ -368,6 +406,11 @@ public class ShaveService extends Service {
             socket2.setSoTimeout( Definitions.SOCKET_TIMEOUT );
             mGenericSocket = socket2;
 
+            DatagramSocket socket3 = new DatagramSocket( Definitions.TEST_SERVER_PORT );
+            socket3.setBroadcast( true );
+            socket3.setSoTimeout( Definitions.SOCKET_TIMEOUT );
+            mTestSocket = socket3;
+
         } catch ( Exception e ) {
             e.printStackTrace();
         }
@@ -399,6 +442,30 @@ public class ShaveService extends Service {
             Log.d( "XXXX", "populateList error" );
             e.printStackTrace();
         }
+    }
+
+    public void testPopulateList() {
+        String ourIp = getOurIp().getHostAddress();
+        String subnet = ( String ) ourIp.subSequence( 0, ourIp.lastIndexOf( "." ) );
+        String parentSubnet = ( String ) ourIp.subSequence( 0, subnet.lastIndexOf( "." ) );
+        for ( int j = 0; j < 256; j++ ) {
+            String parentAddress = parentSubnet + "." + String.valueOf( j );
+            for ( int i = 0; i < 256; i++ ) {
+                try {
+                    String destinationAddress = parentAddress + "." + String.valueOf( i );
+                    Log.d( "XXXX", "sending DISCOVER to = " + destinationAddress );
+                    DatagramPacket sendPacket = new DatagramPacket( "DISCOVER".getBytes(), "DISCOVER".getBytes().length,
+                            InetAddress.getByName( destinationAddress ), Definitions.TEST_SERVER_PORT );
+
+                    mTestSocket.send( sendPacket );
+                } catch ( Exception e ) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        
+
     }
 
     private String getOurUserName() {

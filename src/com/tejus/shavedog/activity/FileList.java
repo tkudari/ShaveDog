@@ -115,35 +115,37 @@ public class FileList extends ListActivity {
     private void processListing( String string ) {
         int index = 0;
         String word;
-        String fileList;
+        String fileList = null;
         String[] currentDirFinder = new String[ 2 ];
         // find the current directory:
         StringTokenizer dirTok = new StringTokenizer( string, "$" );
         for ( int i = 0; ( dirTok.hasMoreTokens() && i <= 1 ); i++ ) {
             currentDirFinder[ i ] = dirTok.nextToken();
         }
-        fileList = currentDirFinder[ 0 ];
+        if ( currentDirFinder[ 0 ].length() > 0 ) {
+            fileList = currentDirFinder[ 0 ].replace( "[", "" ).replace( "]", "" );
+            // populate mFiles:
+            StringTokenizer strTok = new StringTokenizer( fileList, "," );
+            while ( strTok.hasMoreTokens() ) {
+                word = strTok.nextToken();
+
+                // populate file sizes (mFileLengthMap):
+                StringTokenizer lengthTok = new StringTokenizer( word, "^" );
+                String[] fileLengthFinder = new String[ 2 ];
+                for ( int i = 0; lengthTok.hasMoreTokens(); i++ ) {
+                    fileLengthFinder[ i ] = lengthTok.nextToken();
+                }
+                mFiles.add( word.replace( " ", "" ).replace( "[", "" ).replace( "]", "" ) );
+                Log.d( "XXXX", "file added = " + mFiles.get( index ) );
+                if ( fileLengthFinder[ 1 ] != null ) {
+                    mFileLengthMap.put( mFiles.get( index ), fileLengthFinder[ 1 ] );
+                }
+                ++index;
+            }
+        }
         mCurrentDirectory = currentDirFinder[ 1 ];
 
-        // populate mFiles:
-        StringTokenizer strTok = new StringTokenizer( fileList, "," );
-        while ( strTok.hasMoreTokens() ) {
-            word = strTok.nextToken();
-
-            // populate file sizes (mFileLengthMap):
-            StringTokenizer lengthTok = new StringTokenizer( word, "^" );
-            String[] fileLengthFinder = new String[ 2 ];
-            for ( int i = 0; lengthTok.hasMoreTokens(); i++ ) {
-                fileLengthFinder[ i ] = lengthTok.nextToken();
-            }
-            mFiles.add( word.replace( " ", "" ).replace( "[", "" ).replace( "]", "" ) );
-            Log.d( "XXXX", "file added = " + mFiles.get( index ) );
-            if ( fileLengthFinder[ 1 ] != null ) {
-                mFileLengthMap.put( mFiles.get( index ), fileLengthFinder[ 1 ] );
-            }
-            ++index;
-        }
-
+        Log.d( "XXXX", "mFiles length = " + mFiles.size() );
         Log.d( "XXXX", "mFileLengthMap = " + mFileLengthMap.toString() );
         Log.d( "XXXX", "mCurrentDirectory = " + mCurrentDirectory );
 
@@ -204,21 +206,22 @@ public class FileList extends ListActivity {
             View rowView = inflater.inflate( R.layout.file_row, null, true );
             TextView itemName = ( TextView ) rowView.findViewById( R.id.item_name );
             TextView itemSize = ( TextView ) rowView.findViewById( R.id.item_size );
-            if ( fileList.get( position ).startsWith( "#" ) ) {
-                Log.d( "XXXX", "setting bold for position = " + position );
-                itemName.setTypeface( null, Typeface.BOLD );
-                itemSize.setVisibility( View.GONE );
-                name = mShaveService.getFileNameTrivial( fileList.get( position ) );
-            } else {
-                Log.d( "XXXX", "setting italics for position = " + position );
-                itemName.setTypeface( null, Typeface.ITALIC );
-                if ( mFileLengthMap.get( mFiles.get( position ) ) != null ) {
-                    itemSize.setText( saneFileSizeRepresentation( mFileLengthMap.get( mFiles.get( position ) ) ) );
+            if ( fileList.size() > 0 ) {
+                if ( fileList.get( position ).startsWith( "#" ) ) {
+                    Log.d( "XXXX", "setting bold for position = " + position );
+                    itemName.setTypeface( null, Typeface.BOLD );
+                    itemSize.setVisibility( View.GONE );
+                    name = mShaveService.getFileNameTrivial( fileList.get( position ) );
+                } else {
+                    Log.d( "XXXX", "setting italics for position = " + position );
+                    itemName.setTypeface( null, Typeface.ITALIC );
+                    if ( mFileLengthMap.get( mFiles.get( position ) ) != null ) {
+                        itemSize.setText( saneFileSizeRepresentation( mFileLengthMap.get( mFiles.get( position ) ) ) );
+                    }
+                    name = stripLengthOff( mShaveService.getFileNameTrivial( fileList.get( position ) ) );
                 }
-                name = stripLengthOff( mShaveService.getFileNameTrivial( fileList.get( position ) ) );
+                itemName.setText( name );
             }
-            itemName.setText( name );
-
             return rowView;
         }
     }
