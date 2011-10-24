@@ -49,6 +49,7 @@ public class ShaveService extends Service {
 
     String mCurrentDir = null;
     String mPreviousDir = null;
+    TestSearchMethod mFinder;
 
     private static String DEFAULT_DOWNLOAD_LOC = null;
     // This is the top-most directory you can visit. To modify this, change
@@ -228,6 +229,7 @@ public class ShaveService extends Service {
                     Log.d( "XXXX", "server listening on : " + requestSocket[ 0 ].getLocalPort() );
                     requestSocket[ 0 ].receive( packet );
                     Log.d( "XXXX", "Stuff received by test Server = " + new String( packet.getData() ) );
+                    dealWithReceivedPacket( packet );
                     publishProgress( packet );
                     Log.d( "XXXX", "done with publishProgress" );
 
@@ -251,7 +253,7 @@ public class ShaveService extends Service {
         Log.d( "XXXX", "command here = " + command );
 
         StringTokenizer strTok = new StringTokenizer( command, Definitions.COMMAND_DELIM );
-        while ( strTok.hasMoreTokens() && wordCounter < Definitions.COMMAND_WORD_LENGTH ) {
+        while ( strTok.hasMoreTokens() && wordCounter <= Definitions.COMMAND_WORD_LENGTH ) {
             words[ wordCounter ] = strTok.nextToken();
             Log.d( "XXXX", "word here = " + words[ wordCounter ] );
             ++wordCounter;
@@ -261,8 +263,17 @@ public class ShaveService extends Service {
 
         senderAddress = words[ 2 ];
 
-        if ( words[ 0 ].equals( "DISCOVER" ) ) {
+        if ( words[ 0 ].equals( Definitions.DISCOVER ) ) {
             Log.d( "XXXX", "DISCOVER packet received...." );
+            Log.d( "XXXX", "cleanedup = " + cleanThisStringUp( words[ 2 ] ) );
+            if ( cleanThisStringUp( words[ 2 ] ).equals( cleanThisStringUp( Definitions.IP_ADDRESS_INETADDRESS.toString() ) ) ) {
+                Log.d( "XXXX", "yep, it's ours" );
+            } else {
+                newRequestReceived( new String[] {
+                    words[ 1 ],
+                    cleanThisStringUp( words[ 2 ] )
+                } );
+            }
         }
 
         // this's a broadcast:
@@ -285,6 +296,11 @@ public class ShaveService extends Service {
         }
 
         if ( words[ 0 ].equals( Definitions.REPLY_ACCEPTED ) ) {
+            // stop the finder:
+            if ( mFinder != null ) {
+
+                Log.d( "XXXX", "dealWithReceivedPacket(): Cancelling  mFinder, since a friend replied = " + mFinder.cancel( true ) );
+            }
             String userName = words[ 1 ];
             String address = cleanThisStringUp( words[ 2 ] );
             Log.d( "XXXX", "dealing with pkt: " + userName + ", " + address );
@@ -445,27 +461,49 @@ public class ShaveService extends Service {
     }
 
     public void testPopulateList() {
-        String ourIp = getOurIp().getHostAddress();
-        String subnet = ( String ) ourIp.subSequence( 0, ourIp.lastIndexOf( "." ) );
-        String parentSubnet = ( String ) ourIp.subSequence( 0, subnet.lastIndexOf( "." ) );
-        for ( int j = 0; j < 256; j++ ) {
-            String parentAddress = parentSubnet + "." + String.valueOf( j );
-            for ( int i = 0; i < 256; i++ ) {
-                try {
-                    String destinationAddress = parentAddress + "." + String.valueOf( i );
-                    Log.d( "XXXX", "sending DISCOVER to = " + destinationAddress );
-                    DatagramPacket sendPacket = new DatagramPacket( "DISCOVER".getBytes(), "DISCOVER".getBytes().length,
-                            InetAddress.getByName( destinationAddress ), Definitions.TEST_SERVER_PORT );
+        mFinder = new TestSearchMethod();
+        mFinder.execute();
+    }
 
-                    mTestSocket.send( sendPacket );
-                } catch ( Exception e ) {
-                    e.printStackTrace();
-                }
-            }
+    private class TestSearchMethod extends AsyncTask<Void, DatagramPacket, Void> {
+        @Override
+        protected void onProgressUpdate( DatagramPacket... packet ) {
+            dealWithReceivedPacket( packet[ 0 ] );
         }
 
-        
+        @Override
+        protected Void doInBackground( Void... sad ) {
+            String ourIp = getOurIp().getHostAddress();
+            String subnet = ( String ) ourIp.subSequence( 0, ourIp.lastIndexOf( "." ) );
+            String parentSubnet = ( String ) ourIp.subSequence( 0, subnet.lastIndexOf( "." ) );
+            for ( int j = 0; j < 256; j++ ) {
+                String parentAddress = parentSubnet + "." + String.valueOf( j );
+                for ( int i = 0; i < 256; i++ ) {
+                    try {
+                        if ( isCancelled() ) {
+                            break;
+                        }
+                        String destinationAddress = parentAddress + "." + String.valueOf( i );
+                        String searchString = Definitions.DISCOVER + ":" + getOurUserName() + ":" + getOurIp().toString().replace( "/", "" )
+                                + Definitions.END_DELIM;
 
+                        Log.d( "XXXX", "sending DISCOVER to = " + destinationAddress );
+                        DatagramPacket sendPacket = new DatagramPacket( searchString.getBytes(), searchString.getBytes().length,
+                                InetAddress.getByName( destinationAddress ), Definitions.TEST_SERVER_PORT );
+
+                        mTestSocket.send( sendPacket );
+                    } catch ( Exception e ) {
+                        e.printStackTrace();
+                    }
+                }
+                if ( isCancelled() ) {
+                    Log.d( "XXXX", "TestSearchMethod: stopping search, since a friend replied.. " );
+                    break;
+                }
+            }
+
+            return null;
+        }
     }
 
     private String getOurUserName() {
@@ -481,7 +519,8 @@ public class ShaveService extends Service {
             for ( int k = 0; k < 4; k++ ) {
                 quads[ k ] = ( byte ) ( ( ourIp >> k * 8 ) & 0xFF );
             }
-            Log.d( "XXXX", "our IP address here = " + InetAddress.getByAddress( quads ).getHostAddress() );
+            // Log.d( "XXXX", "our IP address here = " +
+            // InetAddress.getByAddress( quads ).getHostAddress() );
             Definitions.IP_ADDRESS_INETADDRESS = InetAddress.getByAddress( quads );
             return InetAddress.getByAddress( quads );
         } catch ( UnknownHostException e ) {
@@ -564,9 +603,9 @@ public class ShaveService extends Service {
             ServerSocket serverSocket;
             Socket connection;
             this.context = context[ 0 ];
-
+            serverSocket = null;
             try {
-                serverSocket = new ServerSocket( Definitions.FILE_TRANSFER_PORT );
+                serverSocket = new ServerSocket( Definitions.DOWNLOAD_TRANSFER_PORT );
                 while ( true ) {
                     Log.d( "XXXX", "Downloader - gonna start waiting on accept()" );
                     connection = serverSocket.accept();
@@ -641,6 +680,7 @@ public class ShaveService extends Service {
             this.filePath = filePath;
             this.destinationAddress = destinationAddress;
             this.fileSize = fileSize;
+            Log.d( "XXXX", "uploader's destination address = " + destinationAddress );
         }
 
         @Override
@@ -650,7 +690,7 @@ public class ShaveService extends Service {
             OutputStream oStream = null;
 
             try {
-                socket = new Socket( destinationAddress, Definitions.FILE_TRANSFER_PORT );
+                socket = new Socket( destinationAddress, Definitions.DOWNLOAD_TRANSFER_PORT );
                 oStream = ( OutputStream ) socket.getOutputStream();
                 iStream = new FileInputStream( new File( filePath ) );
             } catch ( Exception e ) {

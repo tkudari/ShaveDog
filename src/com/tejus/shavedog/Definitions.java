@@ -7,8 +7,9 @@ public class Definitions {
     public static InetAddress IP_ADDRESS_INETADDRESS;
     public static int BROADCAST_SERVER_PORT = 5555;
     public static int GENERIC_SERVER_PORT = 5565;
-    public static int TEST_SERVER_PORT = 5585;
-    public static final int FILE_TRANSFER_PORT = 5575;    
+    public static int TEST_SERVER_PORT = 5595;
+    public static final int UPLOAD_TRANSFER_PORT = 5575;    
+    public static final int DOWNLOAD_TRANSFER_PORT = 5585;
     
     public static final int COMMAND_BUFSIZE = 4000;
     public static final int DOWNLOAD_BUFFER_SIZE = 32000;
@@ -32,6 +33,7 @@ public class Definitions {
     public static String REQUEST_DIRECTORY = "request_directory";
     public static String HOME_DIRECTORY = "";
     
+    public static String DISCOVER = "discover";    
     
     
     //Intent Names:
