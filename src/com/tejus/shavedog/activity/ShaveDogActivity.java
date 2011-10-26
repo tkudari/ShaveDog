@@ -82,6 +82,11 @@ public class ShaveDogActivity extends Activity {
             case R.id.populate_list:
                 this.populateList();
                 return true;
+            
+            case R.id.test_populate_list:
+                this.testPopulateList();
+                return true;
+                
 
             case R.id.set_creds:
                 this.setCredentials();
@@ -104,10 +109,15 @@ public class ShaveDogActivity extends Activity {
     }
 
     private void populateList() {
-        mShaveService.testPopulateList();
+        mShaveService.populateList();
 
     }
 
+    private void testPopulateList() {
+        mShaveService.testPopulateList();
+    }
+
+    
     InetAddress getBroadcastAddress() throws IOException {
 
         int broadcast = ( dhcp.ipAddress & dhcp.netmask ) | ~dhcp.netmask;

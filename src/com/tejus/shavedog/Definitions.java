@@ -21,6 +21,7 @@ public class Definitions {
     public static String USERNAME;
     public static String credsPrefFile = "credsPrefFile";
     public static String prefUserName = "pUserName";
+    public static String prefHomeDirectory = "pHomeDirectory";
     public static String defaultUserName = "defaultUserName";
     public static int MIN_USERNAME_LENGTH = 3;
     public static String END_DELIM = "*";
@@ -34,6 +35,7 @@ public class Definitions {
     public static String HOME_DIRECTORY = "";
     
     public static String DISCOVER = "discover";    
+    public static boolean ALLOW_COMPLEX_SEARCH = false;
     
     
     //Intent Names:

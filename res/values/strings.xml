@@ -12,6 +12,7 @@
    	<string name="quit">Quit</string>
    	<string name="not_loaded">No images found, or MediaProvider not populated yet. \n Give it some time or take some pictures.</string>
    	<string name="populate_list">Populate List</string>
+   	<string name="test_populate_list">Slow Populate List</string>
    	<string name="set_creds">Set Credentials</string>   	
    	<string name="username">User name</string>
    	<string name="set">Set!</string>

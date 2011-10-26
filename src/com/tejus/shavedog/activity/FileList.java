@@ -70,7 +70,7 @@ public class FileList extends ListActivity {
         homeButton.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                mShaveService.sendMessage( fromAddress, Definitions.REQUEST_DIRECTORY + ":" + getParentDirectory( ShaveService.mHomeDirectory ) );
+                mShaveService.sendMessage( fromAddress, Definitions.REQUEST_DIRECTORY + ":" + getParentDirectory( mShaveService.getHomeDirectory() ) );
             }
         } );
 
@@ -87,7 +87,13 @@ public class FileList extends ListActivity {
     }
 
     protected String stripLengthOff( String filePath ) {
-        return filePath.substring( 0, filePath.lastIndexOf( "^" ) );
+        Log.d( "XXXX", "filePath in stripLengthOff = " + filePath );
+        Log.d( "XXXX", "lastindex in stripLengthOff = " + filePath.lastIndexOf( "^" ) );
+        if ( filePath.contains( "^" ) ) {
+            return filePath.substring( 0, filePath.lastIndexOf( "^" ) );
+        } else {
+            return null;
+        }
     }
 
     protected String cleanThisStringUp( String string ) {
@@ -228,7 +234,7 @@ public class FileList extends ListActivity {
 
     String getParentDirectory( String directory ) {
         // if we're already the home dir, return us back:
-        if ( directory.equals( ShaveService.mHomeDirectory ) ) {
+        if ( directory.equals( mShaveService.getHomeDirectory() ) ) {
             return directory;
         } else {
             // else, return our parent dir:

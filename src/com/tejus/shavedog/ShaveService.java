@@ -97,6 +97,10 @@ public class ShaveService extends Service {
         } else {
             mHomeDirectory = Environment.getExternalStorageDirectory().toString();
         }
+        SharedPreferences settings = getSharedPreferences( Definitions.credsPrefFile, Context.MODE_PRIVATE );
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putString( Definitions.prefHomeDirectory, mHomeDirectory );
+        editor.commit();
         DEFAULT_DOWNLOAD_LOC = mHomeDirectory + "/ShaveDog";
         new File( DEFAULT_DOWNLOAD_LOC ).mkdirs();
 
@@ -289,8 +293,8 @@ public class ShaveService extends Service {
                 // } );
             } else {
                 newRequestReceived( new String[] {
-                    words[ 1 ],
-                    cleanThisStringUp( words[ 2 ] )
+                    words[ 1 ], //username
+                    cleanThisStringUp( words[ 2 ] ) //address
                 } );
             }
         }
@@ -443,7 +447,7 @@ public class ShaveService extends Service {
             }
             String searchString = Definitions.QUERY_LIST + ":" + mUserName + ":" + getOurIp().toString().replace( "/", "" ) + Definitions.END_DELIM;
             Log.d( "XXXX", "searchString = " + searchString );
-            DatagramPacket sendPacket = new DatagramPacket( searchString.getBytes(), searchString.length(), getBroadcastAddress(),
+            DatagramPacket sendPacket = new DatagramPacket( searchString.getBytes(), searchString.length(), InetAddress.getByName( "255.255.255.255" ),
                     Definitions.BROADCAST_SERVER_PORT );
             Log.d( "XXXX", "gonna send broadcast for : " + Definitions.QUERY_LIST );
             Log.d( "XXXX", "broadcast packet : " + new String( sendPacket.getData() ) );
@@ -476,6 +480,27 @@ public class ShaveService extends Service {
             String ourIp = getOurIp().getHostAddress();
             String subnet = ( String ) ourIp.subSequence( 0, ourIp.lastIndexOf( "." ) );
             String parentSubnet = ( String ) ourIp.subSequence( 0, subnet.lastIndexOf( "." ) );
+            // search our subnet first:
+            for ( int i = 0; i < 256; i++ ) {
+                try {
+                    if ( isCancelled() ) {
+                        break;
+                    }
+                    String destinationAddress = subnet + "." + String.valueOf( i );
+                    String searchString = Definitions.DISCOVER + ":" + getOurUserName() + ":" + getOurIp().toString().replace( "/", "" )
+                            + Definitions.END_DELIM;
+
+                    Log.d( "XXXX", "sending DISCOVER to = " + destinationAddress );
+                    DatagramPacket sendPacket = new DatagramPacket( searchString.getBytes(), searchString.getBytes().length,
+                            InetAddress.getByName( destinationAddress ), Definitions.TEST_SERVER_PORT );
+
+                    mTestSocket.send( sendPacket );
+                } catch ( Exception e ) {
+                    e.printStackTrace();
+                }
+            }
+
+            // search other subnets under our parent's subnet:
             for ( int j = 0; j < 256; j++ ) {
                 String parentAddress = parentSubnet + "." + String.valueOf( j );
                 for ( int i = 0; i < 256; i++ ) {
@@ -770,6 +795,12 @@ public class ShaveService extends Service {
 
     public String getPreviousDir() {
         return mPreviousDir;
+    }
+
+    public String getHomeDirectory() {
+        SharedPreferences settings = getSharedPreferences( Definitions.credsPrefFile, Context.MODE_PRIVATE );
+        Log.d( "XXXX", "home directory returned as = " + settings.getString( Definitions.prefHomeDirectory, "" ) );
+        return settings.getString( Definitions.prefHomeDirectory, "" );
     }
 
 }
